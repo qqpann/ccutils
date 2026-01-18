@@ -31,6 +31,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Create ~/.npmrc for OIDC auth
+        run: echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
+
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
         with:
