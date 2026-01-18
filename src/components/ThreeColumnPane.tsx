@@ -60,7 +60,6 @@ export function ThreeColumnPane({
             key={`${perm.scope}:${perm.type}:${perm.rule}`}
             permission={perm}
             isSelected={index === selectedRow}
-            rowIndex={index}
           />
         ))
       )}

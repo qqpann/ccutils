@@ -1,18 +1,19 @@
 import React from "react";
 import { Box, Text } from "ink";
-import type { ScopedPermission, PermissionScope } from "../core/config-types.js";
+import type { ScopedPermission } from "../core/config-types.js";
 
 interface PermissionRowProps {
   permission: ScopedPermission;
   isSelected: boolean;
-  rowIndex: number;
 }
 
 const COLUMN_WIDTH = 24;
+const CONTENT_WIDTH = COLUMN_WIDTH - 2; // Leave room for selector
 
 function formatPermission(perm: ScopedPermission): string {
-  const prefix = perm.type === "allow" ? "○ allow" : "● deny";
-  return `${prefix} ${perm.rule}`;
+  // Use checkmark for allow, X for deny
+  const prefix = perm.type === "allow" ? "✓" : "✗";
+  return `${prefix}${perm.rule}`;
 }
 
 function truncate(str: string, maxLen: number): string {
@@ -23,65 +24,36 @@ function truncate(str: string, maxLen: number): string {
 export function PermissionRow({
   permission,
   isSelected,
-  rowIndex,
 }: PermissionRowProps) {
   const formattedPerm = formatPermission(permission);
-  const displayText = truncate(formattedPerm, COLUMN_WIDTH - 2);
-
-  // Determine which column to display in
-  const columns: Record<PermissionScope, string> = {
-    user: "",
-    project: "",
-    local: "",
-  };
-  columns[permission.scope] = displayText;
-
-  const bgColor = isSelected ? "blue" : undefined;
   const textColor = permission.type === "allow" ? "green" : "red";
+  const truncatedText = truncate(formattedPerm, CONTENT_WIDTH);
+
+  const renderCell = (scope: "user" | "project" | "local") => {
+    const isActive = permission.scope === scope;
+    const showSelector = isSelected && isActive;
+    const bgColor = showSelector ? "blue" : undefined;
+    const selector = showSelector ? "▸" : " ";
+
+    if (isActive) {
+      return (
+        <Text backgroundColor={bgColor}>
+          <Text color="cyan">{selector}</Text>
+          <Text color={textColor}>{truncatedText.padEnd(CONTENT_WIDTH)}</Text>
+        </Text>
+      );
+    } else {
+      return <Text>{" ".repeat(COLUMN_WIDTH)}</Text>;
+    }
+  };
 
   return (
     <Box>
-      {/* User column */}
-      <Box width={COLUMN_WIDTH}>
-        <Text backgroundColor={isSelected && permission.scope === "user" ? bgColor : undefined}>
-          {permission.scope === "user" ? (
-            <Text color={textColor}>{columns.user.padEnd(COLUMN_WIDTH)}</Text>
-          ) : (
-            <Text>{" ".repeat(COLUMN_WIDTH)}</Text>
-          )}
-        </Text>
-      </Box>
-
+      <Box width={COLUMN_WIDTH}>{renderCell("user")}</Box>
       <Text color="gray">│</Text>
-
-      {/* Project column */}
-      <Box width={COLUMN_WIDTH}>
-        <Text backgroundColor={isSelected && permission.scope === "project" ? bgColor : undefined}>
-          {permission.scope === "project" ? (
-            <Text color={textColor}>{columns.project.padEnd(COLUMN_WIDTH)}</Text>
-          ) : (
-            <Text>{" ".repeat(COLUMN_WIDTH)}</Text>
-          )}
-        </Text>
-      </Box>
-
+      <Box width={COLUMN_WIDTH}>{renderCell("project")}</Box>
       <Text color="gray">│</Text>
-
-      {/* Local column */}
-      <Box width={COLUMN_WIDTH}>
-        <Text backgroundColor={isSelected && permission.scope === "local" ? bgColor : undefined}>
-          {permission.scope === "local" ? (
-            <Text color={textColor}>{columns.local.padEnd(COLUMN_WIDTH)}</Text>
-          ) : (
-            <Text>{" ".repeat(COLUMN_WIDTH)}</Text>
-          )}
-        </Text>
-      </Box>
-
-      {/* Row indicator */}
-      <Text color={isSelected ? "cyan" : "gray"}>
-        {isSelected ? " ←" : "  "} {(rowIndex + 1).toString().padStart(2)}
-      </Text>
+      <Box width={COLUMN_WIDTH}>{renderCell("local")}</Box>
     </Box>
   );
 }
