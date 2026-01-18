@@ -37,18 +37,15 @@ export function usePermissions(initialConfig: LoadedConfig) {
     hasChanges: false,
   });
 
-  // Get permissions for the current project (combining user + project + local)
-  // Returns sorted permissions (local first, then project, then user)
+  // Get permissions for the current project
+  // Order is fixed at load time: [...local, ...project, ...user]
+  // This order never changes - only the scope property changes when promoting/demoting
   const getProjectPermissions = useCallback(
     (projectIndex: number): ScopedPermission[] => {
       if (projectIndex < 0 || projectIndex >= state.projects.length) {
         return [];
       }
-      // Return sorted permissions
-      return [...state.projects[projectIndex].permissions].sort((a, b) => {
-        const order = { local: 0, project: 1, user: 2 };
-        return order[a.scope] - order[b.scope];
-      });
+      return state.projects[projectIndex].permissions;
     },
     [state.projects]
   );

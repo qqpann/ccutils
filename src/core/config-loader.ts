@@ -63,12 +63,12 @@ function loadProjectConfig(
   const projectPerms = extractPermissions(projectSettings, "project");
   const localPerms = extractPermissions(localSettings, "local");
 
-  // Combine all permissions (user + project + local)
-  // Note: user permissions are shared, we clone them for each project
+  // Combine all permissions in fixed order: local → project → user
+  // This order is preserved throughout the session (only scope changes, not position)
   const allPermissions = [
-    ...userPermissions.map((p) => ({ ...p })),
-    ...projectPerms,
     ...localPerms,
+    ...projectPerms,
+    ...userPermissions.map((p) => ({ ...p })),
   ];
 
   return {

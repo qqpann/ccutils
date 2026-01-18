@@ -14,7 +14,8 @@ export function ThreeColumnPane({
   permissions,
   selectedRow,
 }: ThreeColumnPaneProps) {
-  // Permissions are already sorted (local → project → user)
+  // Permission order is fixed at load time and never changes
+  // Only the scope property changes when promoting/demoting
   return (
     <Box flexDirection="column">
       {/* Header */}
