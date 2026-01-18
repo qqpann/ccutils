@@ -12,8 +12,13 @@ CLI tool for managing Claude Code permission settings across multiple scopes.
 ## Installation
 
 ```bash
-pnpm install
-pnpm run build
+npm install -g @qqpann/ccutils
+```
+
+Or run directly with npx:
+
+```bash
+npx @qqpann/ccutils sync-permissions .
 ```
 
 ## Usage
@@ -49,6 +54,16 @@ ccutils sync-permissions --override-user-settings-path ./sandbox/.claude ./sandb
 | Local (L) | `<project>/.claude/settings.local.json` | Git-ignored local settings |
 
 ## Development
+
+```bash
+git clone https://github.com/qqpann/ccutils.git
+cd ccutils
+pnpm install
+pnpm run build
+
+# Run locally
+node dist/index.js sync-permissions .
+```
 
 ```bash
 pnpm run dev        # Watch mode

@@ -1,5 +1,5 @@
 {
-  "name": "ccutils",
+  "name": "@qqpann/ccutils",
   "version": "0.0.1",
   "description": "CLI tool for managing Claude Code permission settings across multiple scopes",
   "type": "module",
