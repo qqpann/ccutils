@@ -12,16 +12,55 @@ interface AppProps {
   config: LoadedConfig;
 }
 
-// Fixed UI elements take up these lines:
-// - Padding: 2 lines (top/bottom)
-// - Title + margin: 2 lines
-// - Project tabs: 3 lines (border + content + border)
-// - Hidden items indicators (top/bottom): 2 lines
-// - Status bar: 6 lines (separator + legend + keybindings*2 + marginTop + message)
-// - Container height adjustment: 1 line (stdout.rows - 1 trick)
-// - Flexbox adjustment: 1 line (for flexShrink boxes)
-// Total: 2 + 2 + 3 + 2 + 6 + 1 + 1 = 17
-const FIXED_UI_LINES = 17;
+// Layout constants for fixed UI elements (inside the container)
+const LAYOUT = {
+  // Container padding (inside)
+  CONTAINER_PADDING: 2,        // padding={1} adds 1 line top + 1 line bottom
+
+  // Title section
+  TITLE_LINES: 1,              // "sync-permissions" text
+  TITLE_MARGIN_BOTTOM: 1,      // marginBottom={1}
+
+  // Project tabs (Box with border)
+  TABS_BORDER_TOP: 1,
+  TABS_CONTENT: 1,
+  TABS_BORDER_BOTTOM: 1,
+  TABS_MARGIN_BOTTOM: 1,       // marginBottom={1} in ProjectTabs component
+
+  // ThreeColumnPane indicators
+  HIDDEN_ABOVE_INDICATOR: 1,
+  HIDDEN_BELOW_INDICATOR: 1,
+
+  // StatusBar
+  STATUS_MARGIN_TOP: 1,        // marginTop={1} on outer Box
+  STATUS_SEPARATOR: 1,         // "───" line
+  STATUS_LEGEND: 1,            // "U=User P=Project..."
+  STATUS_KEYBINDINGS_1: 1,     // "[↑↓] Navigate..."
+  STATUS_KEYBINDINGS_2: 1,     // "[Tab] Switch project..."
+  STATUS_MESSAGE_MARGIN_TOP: 1, // marginTop={1} on message Box
+  STATUS_MESSAGE: 1,           // "● Unsaved changes" or " "
+} as const;
+
+// Fixed lines INSIDE the container (used to calculate viewportHeight)
+const FIXED_UI_LINES_INSIDE_CONTAINER =
+  LAYOUT.CONTAINER_PADDING +
+  LAYOUT.TITLE_LINES +
+  LAYOUT.TITLE_MARGIN_BOTTOM +
+  LAYOUT.TABS_BORDER_TOP +
+  LAYOUT.TABS_CONTENT +
+  LAYOUT.TABS_BORDER_BOTTOM +
+  LAYOUT.TABS_MARGIN_BOTTOM +
+  LAYOUT.HIDDEN_ABOVE_INDICATOR +
+  LAYOUT.HIDDEN_BELOW_INDICATOR +
+  LAYOUT.STATUS_MARGIN_TOP +
+  LAYOUT.STATUS_SEPARATOR +
+  LAYOUT.STATUS_LEGEND +
+  LAYOUT.STATUS_KEYBINDINGS_1 +
+  LAYOUT.STATUS_KEYBINDINGS_2 +
+  LAYOUT.STATUS_MESSAGE_MARGIN_TOP +
+  LAYOUT.STATUS_MESSAGE;
+// Total: 2 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 17
+
 const MIN_VIEWPORT_HEIGHT = 3;
 const MAX_VIEWPORT_HEIGHT = 20;
 
@@ -31,15 +70,16 @@ export function App({ config }: AppProps) {
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
   const [confirmQuit, setConfirmQuit] = useState(false);
 
-  // Calculate viewport height from terminal size
-  const viewportHeight = useMemo(() => {
-    const terminalHeight = stdout?.rows ?? 24;
-    const calculated = terminalHeight - FIXED_UI_LINES;
-    return Math.min(MAX_VIEWPORT_HEIGHT, Math.max(MIN_VIEWPORT_HEIGHT, calculated));
-  }, [stdout?.rows]);
-
   // Fixed container height to prevent flicker (stdout.rows - 1 trick from ink#359)
-  const containerHeight = (stdout?.rows ?? 24) - 1;
+  const terminalHeight = stdout?.rows ?? 24;
+  const containerHeight = terminalHeight - 1;
+
+  // Calculate viewport height based on container size (not terminal size)
+  // This ensures we don't try to render more rows than the container can fit
+  const viewportHeight = useMemo(() => {
+    const calculated = containerHeight - FIXED_UI_LINES_INSIDE_CONTAINER;
+    return Math.min(MAX_VIEWPORT_HEIGHT, Math.max(MIN_VIEWPORT_HEIGHT, calculated));
+  }, [containerHeight]);
 
   // Use ref to store nav state for handlers
   const navRef = useRef({ selectedProject: 0, selectedRow: 0, viewportStart: 0 });
