@@ -1,5 +1,34 @@
 # @qqpann/ccutils
 
+## 0.1.0
+
+### Minor Changes
+
+- fc46363: Add mouse click support for tab navigation. Users can now click on project tabs to switch between projects, in addition to using Tab/Shift+Tab keyboard shortcuts.
+- 38d0f3c: Add mouse scroll support for navigating permissions list
+
+### Patch Changes
+
+- 83df24d: Fix first permission row being clipped when scrolling is needed
+
+  The first row was hidden in terminals where the viewport calculation was off by one or two lines. This was caused by missing layout constants (TABS_MARGIN_BOTTOM and STATUS_MESSAGE_MARGIN_TOP) in the fixed UI lines calculation.
+
+  Changes:
+
+  - Replace magic number with detailed LAYOUT constants for each UI element
+  - Fix viewportHeight calculation to use containerHeight instead of terminalHeight
+  - Add ink-testing-library for component rendering tests
+  - Add test files for ThreeColumnPane and App layout rendering
+
+- b4c90b9: feat: add mouse click support for tab navigation
+
+  - Click on project tabs to switch between projects
+  - Fix screen flickering when there are unsaved changes (using Ink #359 workaround)
+  - Improve layout stability with flexbox (flexShrink/flexGrow)
+  - Memoize PermissionRow component to prevent unnecessary re-renders
+
+- 626548d: Split status bar key bindings into two lines for better readability
+
 ## 0.0.6
 
 ### Patch Changes
