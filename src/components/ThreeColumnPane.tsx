@@ -24,20 +24,16 @@ export function ThreeColumnPane({
   // Get visible permissions
   const visiblePermissions = permissions.slice(viewportStart, viewportEnd);
 
-  // Calculate fixed height for consistent rendering
-  // indicator lines(2) + viewport rows
-  const fixedHeight = 2 + viewportHeight;
-
   return (
-    <Box flexDirection="column" height={fixedHeight}>
+    <Box flexDirection="column" flexGrow={1}>
       {/* Hidden above indicator */}
-      {hiddenAbove > 0 ? (
+      <Box flexShrink={0}>
         <Text color="gray">
-          {"  "}▲ {hiddenAbove} item{hiddenAbove > 1 ? "s" : ""} above
+          {hiddenAbove > 0
+            ? `  ▲ ${hiddenAbove} item${hiddenAbove > 1 ? "s" : ""} above`
+            : " "}
         </Text>
-      ) : (
-        <Text> </Text>
-      )}
+      </Box>
 
       {/* Permission rows */}
       {permissions.length === 0 ? (
@@ -57,13 +53,13 @@ export function ThreeColumnPane({
       )}
 
       {/* Hidden below indicator */}
-      {hiddenBelow > 0 ? (
+      <Box flexShrink={0}>
         <Text color="gray">
-          {"  "}▼ {hiddenBelow} item{hiddenBelow > 1 ? "s" : ""} below
+          {hiddenBelow > 0
+            ? `  ▼ ${hiddenBelow} item${hiddenBelow > 1 ? "s" : ""} below`
+            : " "}
         </Text>
-      ) : (
-        <Text> </Text>
-      )}
+      </Box>
     </Box>
   );
 }

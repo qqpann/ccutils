@@ -13,12 +13,15 @@ interface AppProps {
 }
 
 // Fixed UI elements take up these lines:
-// - Title + margin: 2 lines
-// - Project tabs: 1 line
-// - Status bar: 3 lines (separator + legend + key bindings)
-// - Hidden items indicators (top/bottom): 2 lines
 // - Padding: 2 lines (top/bottom)
-const FIXED_UI_LINES = 10;
+// - Title + margin: 2 lines
+// - Project tabs: 3 lines (border + content + border)
+// - Hidden items indicators (top/bottom): 2 lines
+// - Status bar: 6 lines (separator + legend + keybindings*2 + marginTop + message)
+// - Container height adjustment: 1 line (stdout.rows - 1 trick)
+// - Flexbox adjustment: 1 line (for flexShrink boxes)
+// Total: 2 + 2 + 3 + 2 + 6 + 1 + 1 = 17
+const FIXED_UI_LINES = 17;
 const MIN_VIEWPORT_HEIGHT = 3;
 const MAX_VIEWPORT_HEIGHT = 20;
 
@@ -34,6 +37,9 @@ export function App({ config }: AppProps) {
     const calculated = terminalHeight - FIXED_UI_LINES;
     return Math.min(MAX_VIEWPORT_HEIGHT, Math.max(MIN_VIEWPORT_HEIGHT, calculated));
   }, [stdout?.rows]);
+
+  // Fixed container height to prevent flicker (stdout.rows - 1 trick from ink#359)
+  const containerHeight = (stdout?.rows ?? 24) - 1;
 
   // Use ref to store nav state for handlers
   const navRef = useRef({ selectedProject: 0, selectedRow: 0, viewportStart: 0 });
@@ -153,7 +159,7 @@ export function App({ config }: AppProps) {
     [tabBounds, nav.selectedProject, setNav]
   );
 
-  // Enable mouse events (scroll + click)
+  // Enable mouse events
   useMouseEvents({
     onScrollUp: scrollUp,
     onScrollDown: scrollDown,
@@ -185,16 +191,18 @@ export function App({ config }: AppProps) {
   }
 
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column" padding={1} height={containerHeight}>
       {/* Title */}
-      <Box marginBottom={1}>
+      <Box marginBottom={1} flexShrink={0}>
         <Text color="cyan" bold>
           sync-permissions
         </Text>
       </Box>
 
       {/* Project tabs */}
-      <ProjectTabs projects={projectNames} selectedIndex={nav.selectedProject} />
+      <Box flexShrink={0}>
+        <ProjectTabs projects={projectNames} selectedIndex={nav.selectedProject} />
+      </Box>
 
       {/* Permission list with legend */}
       <ThreeColumnPane
@@ -205,7 +213,9 @@ export function App({ config }: AppProps) {
       />
 
       {/* Status bar */}
-      <StatusBar hasChanges={state.hasChanges} message={statusMessage} />
+      <Box flexShrink={0}>
+        <StatusBar hasChanges={state.hasChanges} message={statusMessage} />
+      </Box>
     </Box>
   );
 }

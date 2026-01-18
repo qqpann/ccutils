@@ -103,6 +103,7 @@ async function main() {
     // Render the TUI with incremental rendering to reduce flickering
     const { waitUntilExit } = render(React.createElement(App, { config }), {
       incrementalRendering: true,
+      // patchConsole: false,
     });
     await waitUntilExit();
   } catch (error) {

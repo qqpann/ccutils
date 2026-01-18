@@ -49,16 +49,16 @@ export function useMouseEvents({
       const y = parseInt(sgrMatch[3], 10);
       const isPress = sgrMatch[4] === "M";
 
-      // Scroll events
+      // Scroll events only - ignore other events to prevent flicker
       if (button === 64) {
         handlersRef.current.onScrollUp?.();
       } else if (button === 65) {
         handlersRef.current.onScrollDown?.();
-      }
-      // Left click (button 0, on press only)
-      else if (button === 0 && isPress) {
+      } else if (button === 0 && isPress) {
+        // Left click - only call handler, don't trigger unnecessary renders
         handlersRef.current.onClick?.({ x, y });
       }
+      // Ignore all other mouse events (movement, other buttons, releases)
       return;
     }
 

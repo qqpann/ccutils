@@ -1,7 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import { Text } from "ink";
 import type { ScopedPermission, ScopeFlags } from "../core/config-types.js";
-import { willBeDeleted, scopesChanged } from "../core/config-types.js";
+import { willBeDeleted } from "../core/config-types.js";
 
 interface PermissionRowProps {
   permission: ScopedPermission;
@@ -13,6 +13,7 @@ interface PermissionRowProps {
 // "+X" (green) = added
 // " -" (gray) = removed
 // "  " = unchanged disabled
+// Always return the same JSX structure to prevent Ink flickering
 function ScopeIndicator({
   label,
   current,
@@ -22,41 +23,36 @@ function ScopeIndicator({
   current: boolean;
   original: boolean;
 }) {
+  let color: string | undefined = "cyan";
+  let content = "  ";
+
   if (current && !original) {
-    // Added: +X in green
-    return <Text color="green">+{label}</Text>;
+    color = "green";
+    content = `+${label}`;
   } else if (current && original) {
-    // Unchanged enabled: space + X in cyan
-    return <Text color="cyan"> {label}</Text>;
+    color = "cyan";
+    content = ` ${label}`;
   } else if (!current && original) {
-    // Removed: space + - in gray
-    return <Text color="gray"> -</Text>;
+    color = "gray";
+    content = " -";
   } else {
-    // Unchanged disabled: two spaces
-    return <Text>{"  "}</Text>;
+    color = undefined;
+    content = "  ";
   }
+
+  return <Text color={color}>{content}</Text>;
 }
 
 // Render scope flags with diff display
 // Fixed format: [UUPPLL] = 6 characters inside brackets
+// Always use the same component structure to prevent Ink flickering
 function ScopeFlagsDisplay({
   scopes,
   originalScopes,
-  hasChanges,
 }: {
   scopes: ScopeFlags;
   originalScopes: ScopeFlags;
-  hasChanges: boolean;
 }) {
-  // If no changes, use simple format with consistent spacing
-  if (!hasChanges) {
-    const u = scopes.user ? " U" : "  ";
-    const p = scopes.project ? " P" : "  ";
-    const l = scopes.local ? " L" : "  ";
-    return <Text color="cyan">[{u}{p}{l}]</Text>;
-  }
-
-  // With changes, show diff format
   return (
     <Text>
       <Text color="cyan">[</Text>
@@ -74,14 +70,13 @@ function formatPermission(perm: ScopedPermission): string {
   return `${prefix} ${perm.rule}`;
 }
 
-export function PermissionRow({
+export const PermissionRow = memo(function PermissionRow({
   permission,
   isSelected,
 }: PermissionRowProps) {
   const formattedPerm = formatPermission(permission);
   const textColor = permission.type === "allow" ? "green" : "red";
   const isDeleting = willBeDeleted(permission.scopes);
-  const hasChanges = scopesChanged(permission);
 
   const selector = isSelected ? "▸" : " ";
   const bgColor = isSelected ? "gray" : undefined;
@@ -93,15 +88,14 @@ export function PermissionRow({
       <ScopeFlagsDisplay
         scopes={permission.scopes}
         originalScopes={permission.originalScopes}
-        hasChanges={hasChanges}
       />
       <Text> </Text>
       <Text color={isDeleting ? "gray" : textColor} strikethrough={isDeleting}>
         {formattedPerm}
       </Text>
-      {isDeleting && (
-        <Text color="yellow" dimColor> (Will DELETE)</Text>
-      )}
+      <Text color="yellow" dimColor>
+        {isDeleting ? " (Will DELETE)" : ""}
+      </Text>
     </Text>
   );
-}
+});

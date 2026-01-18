@@ -58,17 +58,11 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
         </Text>
       </Box>
 
-      {/* Status message */}
-      {hasChanges && (
-        <Box marginTop={1}>
-          <Text color="yellow">● Unsaved changes</Text>
-        </Box>
-      )}
-      {message && (
-        <Box marginTop={1}>
-          <Text color="green">{message}</Text>
-        </Box>
-      )}
+      {/* Status message - always same height to prevent layout shift */}
+      <Box marginTop={1}>
+        <Text color="yellow">{hasChanges ? "● Unsaved changes" : " "}</Text>
+        <Text color="green">{message ? ` ${message}` : ""}</Text>
+      </Box>
     </Box>
   );
 }
