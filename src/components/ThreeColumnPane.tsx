@@ -33,7 +33,7 @@ export function ThreeColumnPane({
       {/* Hidden above indicator */}
       {hiddenAbove > 0 ? (
         <Text color="gray">
-          {"  "}▲ {hiddenAbove} item{hiddenAbove > 1 ? "s" : ""} hidden
+          {"  "}▲ {hiddenAbove} item{hiddenAbove > 1 ? "s" : ""} above
         </Text>
       ) : (
         <Text> </Text>
@@ -59,7 +59,7 @@ export function ThreeColumnPane({
       {/* Hidden below indicator */}
       {hiddenBelow > 0 ? (
         <Text color="gray">
-          {"  "}▼ {hiddenBelow} item{hiddenBelow > 1 ? "s" : ""} hidden
+          {"  "}▼ {hiddenBelow} item{hiddenBelow > 1 ? "s" : ""} below
         </Text>
       ) : (
         <Text> </Text>
