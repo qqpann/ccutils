@@ -15,6 +15,10 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
       {/* Legend */}
       <Box gap={3}>
         <Text>
+          <Text color="cyan">U</Text>=User <Text color="cyan">P</Text>=Project <Text color="cyan">L</Text>=Local
+        </Text>
+        <Text color="gray">│</Text>
+        <Text>
           <Text color="green">✓</Text>
           <Text color="gray">…</Text>
           <Text>allow</Text>
@@ -23,10 +27,6 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
           <Text color="red">✗</Text>
           <Text color="gray">…</Text>
           <Text>deny</Text>
-        </Text>
-        <Text color="gray">│</Text>
-        <Text>
-          <Text color="cyan">U</Text>=User <Text color="cyan">P</Text>=Project <Text color="cyan">L</Text>=Local
         </Text>
       </Box>
 
