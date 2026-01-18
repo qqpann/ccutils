@@ -3,7 +3,7 @@ import { Box, Text, useApp, useStdout } from "ink";
 import type { LoadedConfig, PermissionScope } from "./core/config-types.js";
 import { usePermissions } from "./hooks/usePermissions.js";
 import { useNavigation } from "./hooks/useNavigation.js";
-import { useMouseScroll } from "./hooks/useMouseScroll.js";
+import { useMouseEvents } from "./hooks/useMouseEvents.js";
 import { ProjectTabs } from "./components/ProjectTabs.js";
 import { ThreeColumnPane } from "./components/ThreeColumnPane.js";
 import { StatusBar } from "./components/StatusBar.js";
@@ -101,7 +101,7 @@ export function App({ config }: AppProps) {
   }, [state.hasChanges, confirmQuit, exit]);
 
   // Navigation hook
-  const { nav, setRowCount, scrollUp, scrollDown } = useNavigation(
+  const { nav, setNav, setRowCount, scrollUp, scrollDown } = useNavigation(
     state.projects.length,
     {
       onMoveLeft: handleMoveLeft,
@@ -114,10 +114,50 @@ export function App({ config }: AppProps) {
     viewportHeight
   );
 
-  // Enable mouse scroll support
-  useMouseScroll({
+  // Calculate tab bounds for hit testing
+  const tabBounds = useMemo(() => {
+    const bounds: Array<{ start: number; end: number }> = [];
+    // Account for Box padding={1} (adds 1 char on left)
+    let x = 1;
+    for (const name of projectNames) {
+      // Each tab: border(1) + paddingX(1) + marker(2) + name + space(1) + paddingX(1) + border(1)
+      // Plus gap(1) between tabs
+      const width = 1 + 1 + 2 + name.length + 1 + 1 + 1;
+      bounds.push({ start: x, end: x + width - 1 });
+      x += width + 1; // +1 for gap
+    }
+    return bounds;
+  }, [projectNames]);
+
+  // Handle mouse click on tabs
+  const handleTabClick = useCallback(
+    (pos: { x: number; y: number }) => {
+      // Tab area spans 3 rows (border-top, content, border-bottom)
+      // Layout: padding(1) + title(1) + marginBottom(1) = 3, then tab starts at y=4,5,6
+      const tabRowStart = 4;
+      const tabRowEnd = 6;
+      if (pos.y < tabRowStart || pos.y > tabRowEnd) return;
+
+      // Find which tab was clicked
+      const clickedIndex = tabBounds.findIndex(
+        (bounds) => pos.x >= bounds.start && pos.x <= bounds.end
+      );
+      if (clickedIndex !== -1 && clickedIndex !== nav.selectedProject) {
+        setNav({
+          selectedProject: clickedIndex,
+          selectedRow: 0,
+          viewportStart: 0,
+        });
+      }
+    },
+    [tabBounds, nav.selectedProject, setNav]
+  );
+
+  // Enable mouse events (scroll + click)
+  useMouseEvents({
     onScrollUp: scrollUp,
     onScrollDown: scrollDown,
+    onClick: handleTabClick,
   });
 
   // Keep ref in sync with nav state
