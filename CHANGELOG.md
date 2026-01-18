@@ -1,5 +1,17 @@
 # @qqpann/ccutils
 
+## 0.0.6
+
+### Patch Changes
+
+- 721d8a9: Fix false positive unsaved changes indicator when reverting scope changes
+
+  Previously, cycling through scopes (e.g., left then right) and returning to the original state would still show "unsaved changes". Now the hasChanges flag correctly compares current scopes against originalScopes to determine if actual changes exist.
+
+- 82d6221: Change scroll indicators from "items hidden" to "items above/below" for clearer direction
+- 88a477c: Move scope legend (U=User P=Project L=Local) to the left side of the status bar
+- c93806f: Add delete/backspace key support to remove permissions from all scopes
+
 ## 0.0.5
 
 ### Patch Changes
