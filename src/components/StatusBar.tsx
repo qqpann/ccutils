@@ -24,6 +24,10 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
           <Text color="gray">…</Text>
           <Text>deny</Text>
         </Text>
+        <Text color="gray">│</Text>
+        <Text>
+          <Text color="cyan">U</Text>=User <Text color="cyan">P</Text>=Project <Text color="cyan">L</Text>=Local
+        </Text>
       </Box>
 
       {/* Key bindings */}
@@ -33,6 +37,9 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
         </Text>
         <Text>
           <Text color="cyan">[←→]</Text> Move scope
+        </Text>
+        <Text>
+          <Text color="cyan">[u/p/l]</Text> Toggle scope
         </Text>
         <Text>
           <Text color="cyan">[Tab]</Text> Switch project

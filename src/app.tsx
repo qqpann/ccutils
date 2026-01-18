@@ -14,8 +14,7 @@ interface AppProps {
 // Fixed UI elements take up these lines:
 // - Title + margin: 2 lines
 // - Project tabs: 1 line
-// - Legend: 1 line
-// - Status bar: 2 lines
+// - Status bar: 3 lines (separator + legend + key bindings)
 // - Hidden items indicators (top/bottom): 2 lines
 // - Padding: 2 lines (top/bottom)
 const FIXED_UI_LINES = 10;

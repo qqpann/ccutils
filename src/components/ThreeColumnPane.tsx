@@ -25,19 +25,11 @@ export function ThreeColumnPane({
   const visiblePermissions = permissions.slice(viewportStart, viewportEnd);
 
   // Calculate fixed height for consistent rendering
-  // legend(1) + indicator lines(2) + viewport rows
-  const fixedHeight = 1 + 2 + viewportHeight;
+  // indicator lines(2) + viewport rows
+  const fixedHeight = 2 + viewportHeight;
 
   return (
     <Box flexDirection="column" height={fixedHeight}>
-      {/* Legend */}
-      <Text color="gray" dimColor>
-        {"  [U P L] "}
-        <Text color="cyan">U</Text>=User <Text color="cyan">P</Text>=Project <Text color="cyan">L</Text>=Local
-        {"  "}
-        <Text color="gray" dimColor>u/p/l: toggle  ←/→: navigate</Text>
-      </Text>
-
       {/* Hidden above indicator */}
       {hiddenAbove > 0 ? (
         <Text color="gray" dimColor>
