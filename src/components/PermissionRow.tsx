@@ -84,7 +84,7 @@ export function PermissionRow({
   const hasChanges = scopesChanged(permission);
 
   const selector = isSelected ? "▸" : " ";
-  const bgColor = isSelected ? "blue" : undefined;
+  const bgColor = isSelected ? "gray" : undefined;
 
   return (
     <Text backgroundColor={bgColor}>
