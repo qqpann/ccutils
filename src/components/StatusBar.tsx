@@ -15,26 +15,26 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
       {/* Key bindings */}
       <Box gap={2}>
         <Text>
-          <Text color="cyan">[↑↓]</Text> 行移動
+          <Text color="cyan">[↑↓]</Text> Navigate
         </Text>
         <Text>
-          <Text color="cyan">[←→]</Text> スコープ移動
+          <Text color="cyan">[←→]</Text> Move scope
         </Text>
         <Text>
-          <Text color="cyan">[Tab]</Text> プロジェクト切替
+          <Text color="cyan">[Tab]</Text> Switch project
         </Text>
         <Text>
-          <Text color="cyan">[Enter]</Text> 保存
+          <Text color="cyan">[Enter]</Text> Save
         </Text>
         <Text>
-          <Text color="cyan">[q]</Text> 終了
+          <Text color="cyan">[q]</Text> Quit
         </Text>
       </Box>
 
       {/* Status message */}
       {hasChanges && (
         <Box marginTop={1}>
-          <Text color="yellow">● 未保存の変更があります</Text>
+          <Text color="yellow">● Unsaved changes</Text>
         </Box>
       )}
       {message && (

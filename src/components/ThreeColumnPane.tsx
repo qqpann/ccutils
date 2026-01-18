@@ -16,7 +16,7 @@ export function ThreeColumnPane({
 }: ThreeColumnPaneProps) {
   // Permission order is fixed at load time and never changes
   // Only the scope property changes when promoting/demoting
-  const header = `${"USER (共通)".padEnd(COLUMN_WIDTH)}│${"PROJECT".padEnd(COLUMN_WIDTH)}│${"LOCAL".padEnd(COLUMN_WIDTH)}`;
+  const header = `${"USER (global)".padEnd(COLUMN_WIDTH)}│${"PROJECT".padEnd(COLUMN_WIDTH)}│${"LOCAL".padEnd(COLUMN_WIDTH)}`;
   const separator = `${"═".repeat(COLUMN_WIDTH)}╪${"═".repeat(COLUMN_WIDTH)}╪${"═".repeat(COLUMN_WIDTH)}`;
 
   return (

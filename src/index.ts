@@ -47,18 +47,18 @@ function parseArgs(args: string[]): {
 // Print usage
 function printUsage(): void {
   console.log(`
-ccutils - Claude Code 設定管理ツール
+ccutils - Claude Code Settings Management Tool
 
 Usage:
   ccutils sync-permissions <paths...>
   ccutils sync-permissions --override-user-settings-path <path> <paths...>
 
 Commands:
-  sync-permissions    パーミッション設定を対話的に管理
+  sync-permissions    Interactively manage permission settings
 
 Options:
   --override-user-settings-path <path>
-    ユーザー設定ファイルのパスを指定（サンドボックステスト用）
+    Specify user settings file path (for sandbox testing)
 
 Examples:
   ccutils sync-permissions .

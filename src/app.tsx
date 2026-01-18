@@ -57,7 +57,7 @@ export function App({ config }: AppProps) {
 
   const handleSave = useCallback(() => {
     save(config.userSettingsPath);
-    setStatusMessage("✓ 保存しました");
+    setStatusMessage("✓ Saved");
     setConfirmQuit(false);
     // Clear message after 2 seconds
     setTimeout(() => setStatusMessage(undefined), 2000);
@@ -66,7 +66,7 @@ export function App({ config }: AppProps) {
   const handleQuit = useCallback(() => {
     if (state.hasChanges && !confirmQuit) {
       setConfirmQuit(true);
-      setStatusMessage("未保存の変更があります。もう一度 q を押すと終了します");
+      setStatusMessage("Unsaved changes. Press q again to quit.");
     } else {
       exit();
     }
@@ -101,7 +101,7 @@ export function App({ config }: AppProps) {
     return (
       <Box flexDirection="column" padding={1}>
         <Text color="yellow">
-          指定されたパスに .claude ディレクトリを持つプロジェクトが見つかりませんでした
+          No projects with .claude directory found in the specified paths
         </Text>
       </Box>
     );
