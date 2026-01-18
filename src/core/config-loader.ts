@@ -69,6 +69,34 @@ function permissionKey(perm: ScopedPermission): string {
   return `${perm.type}:${perm.rule}`;
 }
 
+// Get scope group priority for sorting (L=0, P=1, U=2, multiple=3)
+function getScopeGroupPriority(scopes: ScopeFlags): number {
+  const count =
+    (scopes.local ? 1 : 0) +
+    (scopes.project ? 1 : 0) +
+    (scopes.user ? 1 : 0);
+
+  if (count > 1) return 3; // Multiple scopes
+  if (scopes.local) return 0; // L only
+  if (scopes.project) return 1; // P only
+  if (scopes.user) return 2; // U only
+  return 4; // No scopes (edge case)
+}
+
+// Sort permissions by scope group, then alphabetically by rule
+function sortPermissions(perms: ScopedPermission[]): ScopedPermission[] {
+  return perms.slice().sort((a, b) => {
+    // First, compare by scope group priority
+    const priorityA = getScopeGroupPriority(a.scopes);
+    const priorityB = getScopeGroupPriority(b.scopes);
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    // Then, sort alphabetically by rule
+    return a.rule.localeCompare(b.rule);
+  });
+}
+
 // Merge permissions from multiple scopes into a unified list
 // If the same rule exists in multiple scopes, combine their scope flags
 function mergePermissions(permsList: ScopedPermission[][]): ScopedPermission[] {
@@ -100,7 +128,7 @@ function mergePermissions(permsList: ScopedPermission[][]): ScopedPermission[] {
     }
   }
 
-  return Array.from(map.values());
+  return sortPermissions(Array.from(map.values()));
 }
 
 // Load configuration for a single project
