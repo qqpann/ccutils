@@ -131,9 +131,37 @@ export function useNavigation(
     }
   });
 
+  // Scroll handlers for mouse wheel support
+  const scrollUp = useCallback(() => {
+    setNav((prev) => {
+      const newRow = Math.max(0, prev.selectedRow - 1);
+      let newViewportStart = prev.viewportStart;
+      if (newRow < newViewportStart) {
+        newViewportStart = newRow;
+      }
+      return { ...prev, selectedRow: newRow, viewportStart: newViewportStart };
+    });
+  }, []);
+
+  const scrollDown = useCallback(() => {
+    setNav((prev) => {
+      const newRow = Math.min(
+        Math.max(0, rowCountRef.current - 1),
+        prev.selectedRow + 1
+      );
+      let newViewportStart = prev.viewportStart;
+      if (newRow >= newViewportStart + viewportHeightRef.current) {
+        newViewportStart = newRow - viewportHeightRef.current + 1;
+      }
+      return { ...prev, selectedRow: newRow, viewportStart: newViewportStart };
+    });
+  }, []);
+
   return {
     nav,
     setNav,
     setRowCount,
+    scrollUp,
+    scrollDown,
   };
 }

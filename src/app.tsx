@@ -3,6 +3,7 @@ import { Box, Text, useApp, useStdout } from "ink";
 import type { LoadedConfig, PermissionScope } from "./core/config-types.js";
 import { usePermissions } from "./hooks/usePermissions.js";
 import { useNavigation } from "./hooks/useNavigation.js";
+import { useMouseScroll } from "./hooks/useMouseScroll.js";
 import { ProjectTabs } from "./components/ProjectTabs.js";
 import { ThreeColumnPane } from "./components/ThreeColumnPane.js";
 import { StatusBar } from "./components/StatusBar.js";
@@ -100,7 +101,7 @@ export function App({ config }: AppProps) {
   }, [state.hasChanges, confirmQuit, exit]);
 
   // Navigation hook
-  const { nav, setRowCount } = useNavigation(
+  const { nav, setRowCount, scrollUp, scrollDown } = useNavigation(
     state.projects.length,
     {
       onMoveLeft: handleMoveLeft,
@@ -112,6 +113,12 @@ export function App({ config }: AppProps) {
     },
     viewportHeight
   );
+
+  // Enable mouse scroll support
+  useMouseScroll({
+    onScrollUp: scrollUp,
+    onScrollDown: scrollDown,
+  });
 
   // Keep ref in sync with nav state
   navRef.current = nav;
