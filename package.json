@@ -25,6 +25,17 @@
   ],
   "author": "Qiushi Pan",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qqpann/ccutils.git"
+  },
+  "homepage": "https://github.com/qqpann/ccutils#readme",
+  "bugs": {
+    "url": "https://github.com/qqpann/ccutils/issues"
+  },
+  "files": [
+    "dist"
+  ],
   "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=18"
