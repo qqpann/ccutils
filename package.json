@@ -10,9 +10,14 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
   },
-  "keywords": ["claude", "cli", "settings"],
+  "keywords": [
+    "claude",
+    "cli",
+    "settings"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.14.0",
@@ -29,6 +34,7 @@
     "@types/node": "^25.0.9",
     "@types/react": "^19.2.8",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
   }
 }

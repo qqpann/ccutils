@@ -10,9 +10,12 @@ export const PermissionsSchema = z.object({
 });
 
 // Zod schema for Claude settings file
-export const SettingsSchema = z.object({
-  permissions: PermissionsSchema.optional(),
-});
+// Use passthrough() to preserve unknown fields (statusLine, enabledPlugins, etc.)
+export const SettingsSchema = z
+  .object({
+    permissions: PermissionsSchema.optional(),
+  })
+  .passthrough();
 
 export type Permissions = z.infer<typeof PermissionsSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
