@@ -30,7 +30,7 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
         </Text>
       </Box>
 
-      {/* Key bindings */}
+      {/* Key bindings - Line 1 */}
       <Box gap={2}>
         <Text>
           <Text color="cyan">[↑↓]</Text> Navigate
@@ -44,6 +44,9 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
         <Text>
           <Text color="cyan">[Del]</Text> Delete
         </Text>
+      </Box>
+      {/* Key bindings - Line 2 */}
+      <Box gap={2}>
         <Text>
           <Text color="cyan">[Tab]</Text> Switch project
         </Text>
