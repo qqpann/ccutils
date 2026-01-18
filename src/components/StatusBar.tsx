@@ -42,6 +42,9 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
           <Text color="cyan">[u/p/l]</Text> Toggle scope
         </Text>
         <Text>
+          <Text color="cyan">[Del]</Text> Delete
+        </Text>
+        <Text>
           <Text color="cyan">[Tab]</Text> Switch project
         </Text>
         <Text>

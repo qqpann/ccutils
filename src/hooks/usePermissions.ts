@@ -196,6 +196,53 @@ export function usePermissions(initialConfig: LoadedConfig) {
     });
   }, []);
 
+  // Delete permission: set all scopes to false
+  const deletePermission = useCallback(
+    (projectIndex: number, permIndex: number) => {
+      setState((prev) => {
+        const project = prev.projects[projectIndex];
+        if (!project) return prev;
+
+        const perm = project.permissions[permIndex];
+        if (!perm) return prev;
+
+        // Set all scopes to false
+        const newScopes: ScopeFlags = { user: false, project: false, local: false };
+        const updatedPerm: ScopedPermission = { ...perm, scopes: newScopes };
+
+        // Update the permission in the project
+        const newProjects = prev.projects.map((proj, idx) => {
+          if (idx === projectIndex) {
+            return {
+              ...proj,
+              permissions: proj.permissions.map((p, i) =>
+                i === permIndex ? updatedPerm : p
+              ),
+            };
+          }
+          return proj;
+        });
+
+        // Remove from userPermissions if it was there
+        let newUserPerms = prev.userPermissions;
+        if (perm.scopes.user) {
+          const key = permissionKey(perm);
+          newUserPerms = prev.userPermissions.filter(
+            (p) => permissionKey(p) !== key
+          );
+        }
+
+        return {
+          ...prev,
+          userPermissions: newUserPerms,
+          projects: newProjects,
+          hasChanges: hasAnyChanges(newProjects),
+        };
+      });
+    },
+    []
+  );
+
   // Move right: single scope -> next scope (loop), multiple -> local only
   const moveRight = useCallback((projectIndex: number, permIndex: number) => {
     setState((prev) => {
@@ -296,6 +343,7 @@ export function usePermissions(initialConfig: LoadedConfig) {
     toggleScope,
     moveLeft,
     moveRight,
+    deletePermission,
     save,
   };
 }

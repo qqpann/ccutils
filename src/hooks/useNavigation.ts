@@ -12,6 +12,7 @@ export interface NavigationHandlers {
   onMoveLeft: () => void;
   onMoveRight: () => void;
   onToggleScope: (scope: PermissionScope) => void;
+  onDelete: () => void;
   onSave: () => void;
   onQuit: () => void;
 }
@@ -125,6 +126,8 @@ export function useNavigation(
       handlersRef.current.onToggleScope("project");
     } else if (input === "l" || input === "L") {
       handlersRef.current.onToggleScope("local");
+    } else if (key.delete || key.backspace) {
+      handlersRef.current.onDelete();
     }
   });
 

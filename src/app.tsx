@@ -43,6 +43,7 @@ export function App({ config }: AppProps) {
     toggleScope,
     moveLeft,
     moveRight,
+    deletePermission,
     save,
   } = usePermissions(config);
 
@@ -74,6 +75,13 @@ export function App({ config }: AppProps) {
     setConfirmQuit(false);
   }, [toggleScope]);
 
+  const handleDelete = useCallback(() => {
+    const { selectedProject, selectedRow } = navRef.current;
+    deletePermission(selectedProject, selectedRow);
+    setStatusMessage(undefined);
+    setConfirmQuit(false);
+  }, [deletePermission]);
+
   const handleSave = useCallback(async () => {
     await save(config.userSettingsPath);
     setStatusMessage("✓ Saved");
@@ -98,6 +106,7 @@ export function App({ config }: AppProps) {
       onMoveLeft: handleMoveLeft,
       onMoveRight: handleMoveRight,
       onToggleScope: handleToggleScope,
+      onDelete: handleDelete,
       onSave: handleSave,
       onQuit: handleQuit,
     },
