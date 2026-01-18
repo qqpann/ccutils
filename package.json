@@ -1,9 +1,8 @@
 {
   "name": "ccutils",
-  "version": "1.0.0",
-  "description": "CLI tool for managing Claude Code settings",
+  "version": "0.0.1",
+  "description": "CLI tool for managing Claude Code permission settings across multiple scopes",
   "type": "module",
-  "main": "dist/index.js",
   "bin": {
     "ccutils": "dist/index.js"
   },
@@ -15,11 +14,17 @@
   },
   "keywords": [
     "claude",
+    "claude-code",
+    "anthropic",
     "cli",
-    "settings"
+    "tui",
+    "terminal",
+    "permissions",
+    "settings",
+    "configuration"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Qiushi Pan",
+  "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "engines": {
     "node": ">=18"

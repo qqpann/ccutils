@@ -58,4 +58,4 @@ pnpm test           # Run tests
 
 ## License
 
-ISC
+MIT
