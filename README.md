@@ -1,5 +1,8 @@
 # ccutils
 
+[![CI](https://github.com/qqpann/ccutils/actions/workflows/ci.yml/badge.svg)](https://github.com/qqpann/ccutils/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@qqpann/ccutils)](https://www.npmjs.com/package/@qqpann/ccutils)
+
 CLI tool for managing Claude Code permission settings across multiple scopes.
 
 ## Features
@@ -70,6 +73,19 @@ pnpm run dev        # Watch mode
 pnpm run typecheck  # Type check
 pnpm test           # Run tests
 ```
+
+## Contributing
+
+This project uses [Changesets](https://github.com/changesets/changesets) for version management.
+
+```bash
+# After making changes, create a changeset
+pnpm changeset
+
+# Follow the prompts to describe your changes
+```
+
+When you push to main, GitHub Actions will automatically create a "Version Packages" PR. Merging that PR triggers npm publish.
 
 ## License
 

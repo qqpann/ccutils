@@ -15,6 +15,11 @@ pnpm run dev          # Watch mode for development
 pnpm run typecheck    # Type check without emitting
 pnpm test             # Run vitest tests
 
+# Changesets (versioning)
+pnpm changeset        # Create a changeset for your changes
+pnpm version          # Apply changesets and bump versions
+pnpm release          # Build and publish to npm
+
 # Run the CLI locally
 node dist/index.js sync-permissions .
 node dist/index.js sync-permissions --override-user-settings-path ./sandbox/.claude ./sandbox/projects/*
@@ -72,3 +77,24 @@ Tests are in `src/core/config-writer.test.ts`. The test file validates:
 - Preservation of non-permission settings fields during writes
 - Handling of empty permissions
 - Proper scope-specific file writes
+
+## CI/CD
+
+The project uses GitHub Actions for CI and Changesets for release management.
+
+### Workflows
+
+- **CI** (`.github/workflows/ci.yml`): Runs on all branches and PRs. Executes build, typecheck, and tests.
+- **Publish** (`.github/workflows/publish.yml`): Runs on main branch. Creates "Version Packages" PR or publishes to npm.
+
+### Release Flow
+
+1. Make changes and commit
+2. Run `pnpm changeset` to create a changeset file describing the change
+3. Push to main
+4. GitHub Actions creates a "Version Packages" PR automatically
+5. Merge the PR → npm publish happens automatically
+
+### Required Secrets
+
+- `NPM_TOKEN`: npm access token (Automation type) for publishing
