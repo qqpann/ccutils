@@ -78,13 +78,37 @@ function loadProjectConfig(
   };
 }
 
+// Resolve user settings path (handle both directory and file paths)
+function resolveUserSettingsPath(pathOrDir?: string): string {
+  if (!pathOrDir) {
+    return getDefaultUserSettingsPath();
+  }
+
+  // If it's a directory, append settings.json
+  try {
+    if (fs.existsSync(pathOrDir) && fs.statSync(pathOrDir).isDirectory()) {
+      return `${pathOrDir}/settings.json`;
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  // If it already ends with .json, use as-is
+  if (pathOrDir.endsWith(".json")) {
+    return pathOrDir;
+  }
+
+  // Otherwise, assume it's a .claude directory path
+  return `${pathOrDir}/settings.json`;
+}
+
 // Main function to load all configuration
 export async function loadConfig(
   projectPatterns: string[],
   userSettingsPath?: string
 ): Promise<LoadedConfig> {
-  // Resolve user settings path
-  const userPath = userSettingsPath ?? getDefaultUserSettingsPath();
+  // Resolve user settings path (handle directory or file)
+  const userPath = resolveUserSettingsPath(userSettingsPath);
 
   // Load user-level permissions
   const userSettings = readSettingsFile(userPath);
