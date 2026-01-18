@@ -6,7 +6,11 @@ import type {
   ProjectConfig,
   ScopeFlags,
 } from "../core/config-types.js";
-import { countEnabledScopes, willBeDeleted } from "../core/config-types.js";
+import {
+  countEnabledScopes,
+  willBeDeleted,
+  scopesChanged,
+} from "../core/config-types.js";
 import { saveConfig } from "../core/config-writer.js";
 import { loadConfig } from "../core/config-loader.js";
 
@@ -22,6 +26,13 @@ const SCOPE_ORDER: PermissionScope[] = ["user", "project", "local"];
 // Create a unique key for a permission (type + rule, without scope)
 export function permissionKey(perm: ScopedPermission): string {
   return `${perm.type}:${perm.rule}`;
+}
+
+// Check if any permission has changed from original across all projects
+function hasAnyChanges(projects: ProjectConfig[]): boolean {
+  return projects.some((project) =>
+    project.permissions.some((perm) => scopesChanged(perm))
+  );
 }
 
 // Get single enabled scope (returns null if none or multiple)
@@ -112,7 +123,7 @@ export function usePermissions(initialConfig: LoadedConfig) {
           ...prev,
           userPermissions: newUserPerms,
           projects: newProjects,
-          hasChanges: true,
+          hasChanges: hasAnyChanges(newProjects),
         };
       });
     },
@@ -180,7 +191,7 @@ export function usePermissions(initialConfig: LoadedConfig) {
         ...prev,
         userPermissions: newUserPerms,
         projects: newProjects,
-        hasChanges: true,
+        hasChanges: hasAnyChanges(newProjects),
       };
     });
   }, []);
@@ -246,7 +257,7 @@ export function usePermissions(initialConfig: LoadedConfig) {
         ...prev,
         userPermissions: newUserPerms,
         projects: newProjects,
-        hasChanges: true,
+        hasChanges: hasAnyChanges(newProjects),
       };
     });
   }, []);
