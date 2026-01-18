@@ -14,12 +14,7 @@ export function ThreeColumnPane({
   permissions,
   selectedRow,
 }: ThreeColumnPaneProps) {
-  // Sort permissions: local at top, then project, then user (for intuitive promote = move down)
-  const sortedPermissions = [...permissions].sort((a, b) => {
-    const order = { local: 0, project: 1, user: 2 };
-    return order[a.scope] - order[b.scope];
-  });
-
+  // Permissions are already sorted (local → project → user)
   return (
     <Box flexDirection="column">
       {/* Header */}
@@ -52,14 +47,14 @@ export function ThreeColumnPane({
       </Box>
 
       {/* Permission rows */}
-      {sortedPermissions.length === 0 ? (
+      {permissions.length === 0 ? (
         <Box paddingY={1}>
           <Text color="gray" italic>
             No permissions configured
           </Text>
         </Box>
       ) : (
-        sortedPermissions.map((perm, index) => (
+        permissions.map((perm, index) => (
           <PermissionRow
             key={`${perm.scope}:${perm.type}:${perm.rule}`}
             permission={perm}

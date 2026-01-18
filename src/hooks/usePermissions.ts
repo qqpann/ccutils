@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import type {
   ScopedPermission,
   PermissionScope,
@@ -20,9 +20,14 @@ function getScopeIndex(scope: PermissionScope): number {
   return SCOPE_ORDER.indexOf(scope);
 }
 
-// Create a unique key for a permission
-function permissionKey(perm: ScopedPermission): string {
+// Create a unique key for a permission (type + rule, without scope)
+export function permissionKey(perm: ScopedPermission): string {
   return `${perm.type}:${perm.rule}`;
+}
+
+// Create a full key including scope (for exact matching)
+export function fullPermissionKey(perm: ScopedPermission): string {
+  return `${perm.scope}:${perm.type}:${perm.rule}`;
 }
 
 export function usePermissions(initialConfig: LoadedConfig) {
@@ -33,26 +38,36 @@ export function usePermissions(initialConfig: LoadedConfig) {
   });
 
   // Get permissions for the current project (combining user + project + local)
+  // Returns sorted permissions (local first, then project, then user)
   const getProjectPermissions = useCallback(
     (projectIndex: number): ScopedPermission[] => {
       if (projectIndex < 0 || projectIndex >= state.projects.length) {
         return [];
       }
-      return state.projects[projectIndex].permissions;
+      // Return sorted permissions
+      return [...state.projects[projectIndex].permissions].sort((a, b) => {
+        const order = { local: 0, project: 1, user: 2 };
+        return order[a.scope] - order[b.scope];
+      });
     },
     [state.projects]
   );
 
   // Promote a permission (local → project → user)
+  // Uses fullKey to identify the exact permission
   const promotePermission = useCallback(
-    (projectIndex: number, permIndex: number) => {
+    (projectIndex: number, fullKey: string) => {
       setState((prev) => {
         const project = prev.projects[projectIndex];
         if (!project) return prev;
 
-        const perm = project.permissions[permIndex];
-        if (!perm) return prev;
+        // Find the permission by full key
+        const permIdx = project.permissions.findIndex(
+          (p) => fullPermissionKey(p) === fullKey
+        );
+        if (permIdx === -1) return prev;
 
+        const perm = project.permissions[permIdx];
         const currentScopeIdx = getScopeIndex(perm.scope);
         if (currentScopeIdx >= SCOPE_ORDER.length - 1) {
           // Already at user level, can't promote
@@ -61,10 +76,10 @@ export function usePermissions(initialConfig: LoadedConfig) {
 
         const newScope = SCOPE_ORDER[currentScopeIdx + 1];
         const updatedPerm: ScopedPermission = { ...perm, scope: newScope };
+        const key = permissionKey(perm);
 
         // If promoting to user level, add to userPermissions and update all projects
         if (newScope === "user") {
-          const key = permissionKey(perm);
           // Check if already exists in user
           if (prev.userPermissions.some((p) => permissionKey(p) === key)) {
             // Remove from current project only
@@ -72,7 +87,9 @@ export function usePermissions(initialConfig: LoadedConfig) {
               if (idx === projectIndex) {
                 return {
                   ...proj,
-                  permissions: proj.permissions.filter((_, i) => i !== permIndex),
+                  permissions: proj.permissions.filter(
+                    (p) => fullPermissionKey(p) !== fullKey
+                  ),
                 };
               }
               return proj;
@@ -104,8 +121,8 @@ export function usePermissions(initialConfig: LoadedConfig) {
           if (idx === projectIndex) {
             return {
               ...proj,
-              permissions: proj.permissions.map((p, i) =>
-                i === permIndex ? updatedPerm : p
+              permissions: proj.permissions.map((p) =>
+                fullPermissionKey(p) === fullKey ? updatedPerm : p
               ),
             };
           }
@@ -119,15 +136,20 @@ export function usePermissions(initialConfig: LoadedConfig) {
   );
 
   // Demote a permission (user → project → local)
+  // Uses fullKey to identify the exact permission
   const demotePermission = useCallback(
-    (projectIndex: number, permIndex: number) => {
+    (projectIndex: number, fullKey: string) => {
       setState((prev) => {
         const project = prev.projects[projectIndex];
         if (!project) return prev;
 
-        const perm = project.permissions[permIndex];
-        if (!perm) return prev;
+        // Find the permission by full key
+        const permIdx = project.permissions.findIndex(
+          (p) => fullPermissionKey(p) === fullKey
+        );
+        if (permIdx === -1) return prev;
 
+        const perm = project.permissions[permIdx];
         const currentScopeIdx = getScopeIndex(perm.scope);
         if (currentScopeIdx <= 0) {
           // Already at local level, can't demote
@@ -150,8 +172,8 @@ export function usePermissions(initialConfig: LoadedConfig) {
             if (idx === projectIndex) {
               return {
                 ...proj,
-                permissions: proj.permissions.map((p, i) =>
-                  i === permIndex ? updatedPerm : p
+                permissions: proj.permissions.map((p) =>
+                  fullPermissionKey(p) === fullKey ? updatedPerm : p
                 ),
               };
             }
@@ -177,8 +199,8 @@ export function usePermissions(initialConfig: LoadedConfig) {
           if (idx === projectIndex) {
             return {
               ...proj,
-              permissions: proj.permissions.map((p, i) =>
-                i === permIndex ? updatedPerm : p
+              permissions: proj.permissions.map((p) =>
+                fullPermissionKey(p) === fullKey ? updatedPerm : p
               ),
             };
           }

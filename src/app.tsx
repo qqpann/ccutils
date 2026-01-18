@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { Box, Text, useApp } from "ink";
-import type { LoadedConfig } from "./core/config-types.js";
-import { usePermissions } from "./hooks/usePermissions.js";
+import type { LoadedConfig, ScopedPermission } from "./core/config-types.js";
+import { usePermissions, fullPermissionKey } from "./hooks/usePermissions.js";
 import { useNavigation } from "./hooks/useNavigation.js";
 import { ProjectTabs } from "./components/ProjectTabs.js";
 import { ThreeColumnPane } from "./components/ThreeColumnPane.js";
@@ -16,8 +16,9 @@ export function App({ config }: AppProps) {
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
   const [confirmQuit, setConfirmQuit] = useState(false);
 
-  // Use ref to store nav state for handlers
+  // Use ref to store nav state and permissions for handlers
   const navRef = useRef({ selectedProject: 0, selectedRow: 0 });
+  const permissionsRef = useRef<ScopedPermission[]>([]);
 
   const {
     state,
@@ -33,29 +34,23 @@ export function App({ config }: AppProps) {
     [state.projects]
   );
 
-  // Sort permissions for display (local at top, user at bottom)
-  const getSortedPermissions = useCallback(
-    (projectIndex: number) => {
-      const perms = getProjectPermissions(projectIndex);
-      return [...perms].sort((a, b) => {
-        const order = { local: 0, project: 1, user: 2 };
-        return order[a.scope] - order[b.scope];
-      });
-    },
-    [getProjectPermissions]
-  );
-
   // Navigation handlers using ref
   const handlePromote = useCallback(() => {
     const { selectedProject, selectedRow } = navRef.current;
-    promotePermission(selectedProject, selectedRow);
+    const perm = permissionsRef.current[selectedRow];
+    if (perm) {
+      promotePermission(selectedProject, fullPermissionKey(perm));
+    }
     setStatusMessage(undefined);
     setConfirmQuit(false);
   }, [promotePermission]);
 
   const handleDemote = useCallback(() => {
     const { selectedProject, selectedRow } = navRef.current;
-    demotePermission(selectedProject, selectedRow);
+    const perm = permissionsRef.current[selectedRow];
+    if (perm) {
+      demotePermission(selectedProject, fullPermissionKey(perm));
+    }
     setStatusMessage(undefined);
     setConfirmQuit(false);
   }, [demotePermission]);
@@ -88,11 +83,14 @@ export function App({ config }: AppProps) {
   // Keep ref in sync with nav state
   navRef.current = nav;
 
-  // Get permissions for the currently selected project
+  // Get permissions for the currently selected project (already sorted in getProjectPermissions)
   const displayPermissions = useMemo(
-    () => getSortedPermissions(nav.selectedProject),
-    [getSortedPermissions, nav.selectedProject]
+    () => getProjectPermissions(nav.selectedProject),
+    [getProjectPermissions, nav.selectedProject]
   );
+
+  // Keep permissions ref in sync
+  permissionsRef.current = displayPermissions;
 
   // Update row count when permissions change
   useEffect(() => {
