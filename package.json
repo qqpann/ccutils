@@ -13,7 +13,7 @@
     "test": "vitest",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "pnpm run build && changeset publish"
+    "release": "pnpm run build && npm publish --provenance --access public"
   },
   "keywords": [
     "claude",

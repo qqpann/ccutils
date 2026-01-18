@@ -31,6 +31,6 @@ jobs:
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
         with:
-          publish: pnpm run build && npm publish --provenance --access public
+          publish: pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
