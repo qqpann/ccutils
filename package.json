@@ -1,0 +1,34 @@
+{
+  "name": "ccutils",
+  "version": "1.0.0",
+  "description": "CLI tool for managing Claude Code settings",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ccutils": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["claude", "cli", "settings"],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "glob": "^13.0.0",
+    "ink": "^6.6.0",
+    "react": "^19.2.3",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.2.8",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  }
+}
