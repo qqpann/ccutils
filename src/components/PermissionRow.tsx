@@ -13,7 +13,7 @@ const CONTENT_WIDTH = COLUMN_WIDTH - 2; // Leave room for selector
 function formatPermission(perm: ScopedPermission): string {
   // Use checkmark for allow, X for deny
   const prefix = perm.type === "allow" ? "✓" : "✗";
-  return `${prefix}${perm.rule}`;
+  return `${prefix} ${perm.rule}`;
 }
 
 function truncate(str: string, maxLen: number): string {
