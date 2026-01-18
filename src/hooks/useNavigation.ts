@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useInput } from "ink";
 
 export interface NavigationState {
@@ -33,15 +33,17 @@ export function useNavigation(
     handlersRef.current = handlers;
   }, [projectCount, handlers]);
 
-  // Update row count from outside (called by parent)
-  const setRowCount = (count: number) => {
+  // Update row count from outside (called by parent) - stable reference
+  const setRowCount = useCallback((count: number) => {
+    if (rowCountRef.current === count) return; // Skip if unchanged
     rowCountRef.current = count;
     // Clamp current selection if needed
-    setNav((prev) => ({
-      ...prev,
-      selectedRow: Math.min(prev.selectedRow, Math.max(0, count - 1)),
-    }));
-  };
+    setNav((prev) => {
+      const newRow = Math.min(prev.selectedRow, Math.max(0, count - 1));
+      if (newRow === prev.selectedRow) return prev; // Skip if unchanged
+      return { ...prev, selectedRow: newRow };
+    });
+  }, []);
 
   // Handle keyboard input
   useInput((input, key) => {
