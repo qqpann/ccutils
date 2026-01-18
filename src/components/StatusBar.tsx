@@ -12,6 +12,20 @@ export function StatusBar({ hasChanges, message }: StatusBarProps) {
       {/* Separator */}
       <Text color="gray">{"─".repeat(76)}</Text>
 
+      {/* Legend */}
+      <Box gap={3}>
+        <Text>
+          <Text color="green">✓</Text>
+          <Text color="gray">…</Text>
+          <Text>allow</Text>
+        </Text>
+        <Text>
+          <Text color="red">✗</Text>
+          <Text color="gray">…</Text>
+          <Text>deny</Text>
+        </Text>
+      </Box>
+
       {/* Key bindings */}
       <Box gap={2}>
         <Text>
