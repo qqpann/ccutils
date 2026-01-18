@@ -74,8 +74,8 @@ export function App({ config }: AppProps) {
     setConfirmQuit(false);
   }, [toggleScope]);
 
-  const handleSave = useCallback(() => {
-    save(config.userSettingsPath);
+  const handleSave = useCallback(async () => {
+    await save(config.userSettingsPath);
     setStatusMessage("✓ Saved");
     setConfirmQuit(false);
     // Clear message after 2 seconds

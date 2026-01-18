@@ -8,6 +8,7 @@ import type {
 } from "../core/config-types.js";
 import { countEnabledScopes, willBeDeleted } from "../core/config-types.js";
 import { saveConfig } from "../core/config-writer.js";
+import { loadConfig } from "../core/config-loader.js";
 
 export interface PermissionState {
   userPermissions: ScopedPermission[];
@@ -250,9 +251,9 @@ export function usePermissions(initialConfig: LoadedConfig) {
     });
   }, []);
 
-  // Save all changes (filter out permissions with no scopes)
+  // Save all changes and reload config from files
   const save = useCallback(
-    (userSettingsPath: string) => {
+    async (userSettingsPath: string) => {
       // Filter out permissions that will be deleted (no scopes enabled)
       const filteredUserPerms = state.userPermissions.filter(
         (p) => !willBeDeleted(p.scopes)
@@ -265,20 +266,15 @@ export function usePermissions(initialConfig: LoadedConfig) {
 
       saveConfig(userSettingsPath, filteredUserPerms, filteredProjects);
 
-      // After save, reset originalScopes to current scopes (changes are now persisted)
-      setState((prev) => ({
-        ...prev,
+      // Reload config from files to ensure all projects have latest user permissions
+      const projectPaths = state.projects.map((p) => p.path);
+      const reloadedConfig = await loadConfig(projectPaths, userSettingsPath);
+
+      setState({
+        userPermissions: reloadedConfig.userPermissions,
+        projects: reloadedConfig.projects,
         hasChanges: false,
-        userPermissions: prev.userPermissions
-          .filter((p) => !willBeDeleted(p.scopes))
-          .map((p) => ({ ...p, originalScopes: { ...p.scopes } })),
-        projects: prev.projects.map((proj) => ({
-          ...proj,
-          permissions: proj.permissions
-            .filter((p) => !willBeDeleted(p.scopes))
-            .map((p) => ({ ...p, originalScopes: { ...p.scopes } })),
-        })),
-      }));
+      });
     },
     [state.userPermissions, state.projects]
   );
