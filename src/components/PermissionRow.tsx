@@ -7,7 +7,7 @@ interface PermissionRowProps {
   isSelected: boolean;
 }
 
-const COLUMN_WIDTH = 24;
+const COLUMN_WIDTH = 36;
 const CONTENT_WIDTH = COLUMN_WIDTH - 2; // Leave room for selector
 
 function formatPermission(perm: ScopedPermission): string {

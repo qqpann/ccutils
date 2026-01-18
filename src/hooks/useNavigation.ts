@@ -4,6 +4,7 @@ import { useInput } from "ink";
 export interface NavigationState {
   selectedProject: number;
   selectedRow: number;
+  viewportStart: number;
 }
 
 export interface NavigationHandlers {
@@ -15,12 +16,17 @@ export interface NavigationHandlers {
 
 export function useNavigation(
   projectCount: number,
-  handlers: NavigationHandlers
+  handlers: NavigationHandlers,
+  viewportHeight: number = 10
 ) {
   const [nav, setNav] = useState<NavigationState>({
     selectedProject: 0,
     selectedRow: 0,
+    viewportStart: 0,
   });
+
+  // Keep viewportHeight in ref
+  const viewportHeightRef = useRef(viewportHeight);
 
   // Use refs to avoid stale closures
   const projectCountRef = useRef(projectCount);
@@ -31,37 +37,59 @@ export function useNavigation(
   useEffect(() => {
     projectCountRef.current = projectCount;
     handlersRef.current = handlers;
-  }, [projectCount, handlers]);
+    viewportHeightRef.current = viewportHeight;
+  }, [projectCount, handlers, viewportHeight]);
 
   // Update row count from outside (called by parent) - stable reference
   const setRowCount = useCallback((count: number) => {
     if (rowCountRef.current === count) return; // Skip if unchanged
     rowCountRef.current = count;
-    // Clamp current selection if needed
+    // Clamp current selection and adjust viewport if needed
     setNav((prev) => {
       const newRow = Math.min(prev.selectedRow, Math.max(0, count - 1));
-      if (newRow === prev.selectedRow) return prev; // Skip if unchanged
-      return { ...prev, selectedRow: newRow };
+      // Ensure viewportStart is valid for new count
+      const maxViewportStart = Math.max(0, count - viewportHeightRef.current);
+      let newViewportStart = Math.min(prev.viewportStart, maxViewportStart);
+      // Ensure selected row is visible
+      if (newRow < newViewportStart) {
+        newViewportStart = newRow;
+      } else if (newRow >= newViewportStart + viewportHeightRef.current) {
+        newViewportStart = newRow - viewportHeightRef.current + 1;
+      }
+      if (newRow === prev.selectedRow && newViewportStart === prev.viewportStart) {
+        return prev;
+      }
+      return { ...prev, selectedRow: newRow, viewportStart: newViewportStart };
     });
   }, []);
 
   // Handle keyboard input
   useInput((input, key) => {
     if (key.upArrow) {
-      // Move up
-      setNav((prev) => ({
-        ...prev,
-        selectedRow: Math.max(0, prev.selectedRow - 1),
-      }));
+      // Move up with viewport adjustment
+      setNav((prev) => {
+        const newRow = Math.max(0, prev.selectedRow - 1);
+        let newViewportStart = prev.viewportStart;
+        // Scroll viewport up if selection goes above it
+        if (newRow < newViewportStart) {
+          newViewportStart = newRow;
+        }
+        return { ...prev, selectedRow: newRow, viewportStart: newViewportStart };
+      });
     } else if (key.downArrow) {
-      // Move down
-      setNav((prev) => ({
-        ...prev,
-        selectedRow: Math.min(
+      // Move down with viewport adjustment
+      setNav((prev) => {
+        const newRow = Math.min(
           Math.max(0, rowCountRef.current - 1),
           prev.selectedRow + 1
-        ),
-      }));
+        );
+        let newViewportStart = prev.viewportStart;
+        // Scroll viewport down if selection goes below it
+        if (newRow >= newViewportStart + viewportHeightRef.current) {
+          newViewportStart = newRow - viewportHeightRef.current + 1;
+        }
+        return { ...prev, selectedRow: newRow, viewportStart: newViewportStart };
+      });
     } else if (key.leftArrow) {
       handlersRef.current.onPromote();
     } else if (key.rightArrow) {
@@ -74,6 +102,7 @@ export function useNavigation(
             (prev.selectedProject - 1 + Math.max(1, projectCountRef.current)) %
             Math.max(1, projectCountRef.current),
           selectedRow: 0,
+          viewportStart: 0,
         }));
       } else {
         // Next project
@@ -81,6 +110,7 @@ export function useNavigation(
           selectedProject:
             (prev.selectedProject + 1) % Math.max(1, projectCountRef.current),
           selectedRow: 0,
+          viewportStart: 0,
         }));
       }
     } else if (key.return) {

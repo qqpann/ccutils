@@ -100,8 +100,10 @@ async function main() {
       process.exit(1);
     }
 
-    // Render the TUI
-    const { waitUntilExit } = render(React.createElement(App, { config }));
+    // Render the TUI with incremental rendering to reduce flickering
+    const { waitUntilExit } = render(React.createElement(App, { config }), {
+      incrementalRendering: true,
+    });
     await waitUntilExit();
   } catch (error) {
     console.error("Error:", error instanceof Error ? error.message : error);
