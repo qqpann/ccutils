@@ -16,12 +16,17 @@ export function ThreeColumnPane({
 }: ThreeColumnPaneProps) {
   // Permission order is fixed at load time and never changes
   // Only the scope property changes when promoting/demoting
-  const header = `${"USER (global)".padEnd(COLUMN_WIDTH)}│${"PROJECT".padEnd(COLUMN_WIDTH)}│${"LOCAL".padEnd(COLUMN_WIDTH)}`;
   const separator = `${"═".repeat(COLUMN_WIDTH)}╪${"═".repeat(COLUMN_WIDTH)}╪${"═".repeat(COLUMN_WIDTH)}`;
 
   return (
     <Box flexDirection="column">
-      <Text color="cyan" bold>{header}</Text>
+      <Text>
+        <Text color="cyan" bold>{"USER (global)".padEnd(COLUMN_WIDTH)}</Text>
+        <Text color="gray">│</Text>
+        <Text color="cyan" bold>{"PROJECT".padEnd(COLUMN_WIDTH)}</Text>
+        <Text color="gray">│</Text>
+        <Text color="cyan" bold>{"LOCAL".padEnd(COLUMN_WIDTH)}</Text>
+      </Text>
       <Text color="gray">{separator}</Text>
 
       {/* Permission rows */}
