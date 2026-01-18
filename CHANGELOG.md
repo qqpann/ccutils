@@ -1,5 +1,11 @@
 # @qqpann/ccutils
 
+## 0.0.4
+
+### Patch Changes
+
+- 12bb3c8: Improve visibility of hidden items indicator by removing dimColor attribute
+
 ## 0.0.3
 
 ### Patch Changes
