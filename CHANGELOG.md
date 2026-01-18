@@ -1,5 +1,12 @@
 # @qqpann/ccutils
 
+## 0.0.5
+
+### Patch Changes
+
+- b2b13c4: Fix User scope not reflecting on other project tabs after save by reloading config from files
+- cb3ae7e: Sort permissions by scope type (L, P, U, multiple) and alphabetically within each group
+
 ## 0.0.4
 
 ### Patch Changes
