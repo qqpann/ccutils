@@ -32,7 +32,7 @@ export function ThreeColumnPane({
     <Box flexDirection="column" height={fixedHeight}>
       {/* Hidden above indicator */}
       {hiddenAbove > 0 ? (
-        <Text color="gray" dimColor>
+        <Text color="gray">
           {"  "}▲ {hiddenAbove} item{hiddenAbove > 1 ? "s" : ""} hidden
         </Text>
       ) : (
@@ -58,7 +58,7 @@ export function ThreeColumnPane({
 
       {/* Hidden below indicator */}
       {hiddenBelow > 0 ? (
-        <Text color="gray" dimColor>
+        <Text color="gray">
           {"  "}▼ {hiddenBelow} item{hiddenBelow > 1 ? "s" : ""} hidden
         </Text>
       ) : (
