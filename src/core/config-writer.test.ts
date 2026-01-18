@@ -10,6 +10,18 @@ function makeScopes(user: boolean, project: boolean, local: boolean) {
   return { user, project, local };
 }
 
+// Helper to create a permission with both scopes and originalScopes
+function makePerm(
+  rule: string,
+  type: "allow" | "deny",
+  user: boolean,
+  project: boolean,
+  local: boolean
+): ScopedPermission {
+  const scopes = makeScopes(user, project, local);
+  return { rule, type, scopes, originalScopes: { ...scopes } };
+}
+
 describe("config-writer", () => {
   let tempDir: string;
 
@@ -46,7 +58,7 @@ describe("config-writer", () => {
 
       // Save new permissions
       const newPermissions: ScopedPermission[] = [
-        { rule: "Bash(mkdir:*)", type: "allow", scopes: makeScopes(true, false, false) },
+        makePerm("Bash(mkdir:*)", "allow", true, false, false),
       ];
       saveUserPermissions(settingsPath, newPermissions);
 
@@ -69,7 +81,7 @@ describe("config-writer", () => {
       const settingsPath = path.join(tempDir, "new-settings.json");
 
       const permissions: ScopedPermission[] = [
-        { rule: "WebSearch", type: "allow", scopes: makeScopes(true, false, false) },
+        makePerm("WebSearch", "allow", true, false, false),
       ];
       saveUserPermissions(settingsPath, permissions);
 
@@ -111,7 +123,7 @@ describe("config-writer", () => {
       fs.writeFileSync(settingsPath, JSON.stringify(originalSettings, null, 2));
 
       const permissions: ScopedPermission[] = [
-        { rule: "NewRule", type: "allow", scopes: makeScopes(false, true, false) },
+        makePerm("NewRule", "allow", false, true, false),
       ];
       saveProjectPermissions(projectDir, permissions);
 

@@ -41,13 +41,24 @@ function extractPermissions(
   }
 
   const result: ScopedPermission[] = [];
+  const flags = scopeToFlags(scope);
 
   for (const rule of settings.permissions.allow ?? []) {
-    result.push({ rule, type: "allow", scopes: scopeToFlags(scope) });
+    result.push({
+      rule,
+      type: "allow",
+      scopes: { ...flags },
+      originalScopes: { ...flags },
+    });
   }
 
   for (const rule of settings.permissions.deny ?? []) {
-    result.push({ rule, type: "deny", scopes: scopeToFlags(scope) });
+    result.push({
+      rule,
+      type: "deny",
+      scopes: { ...flags },
+      originalScopes: { ...flags },
+    });
   }
 
   return result;
@@ -68,14 +79,23 @@ function mergePermissions(permsList: ScopedPermission[][]): ScopedPermission[] {
       const key = permissionKey(perm);
       const existing = map.get(key);
       if (existing) {
-        // Merge scope flags
+        // Merge scope flags (both current and original)
         existing.scopes = {
           user: existing.scopes.user || perm.scopes.user,
           project: existing.scopes.project || perm.scopes.project,
           local: existing.scopes.local || perm.scopes.local,
         };
+        existing.originalScopes = {
+          user: existing.originalScopes.user || perm.originalScopes.user,
+          project: existing.originalScopes.project || perm.originalScopes.project,
+          local: existing.originalScopes.local || perm.originalScopes.local,
+        };
       } else {
-        map.set(key, { ...perm });
+        map.set(key, {
+          ...perm,
+          scopes: { ...perm.scopes },
+          originalScopes: { ...perm.originalScopes },
+        });
       }
     }
   }

@@ -51,6 +51,16 @@ export interface ScopedPermission {
   rule: string;
   type: "allow" | "deny";
   scopes: ScopeFlags;
+  originalScopes: ScopeFlags; // Track original state for diff display
+}
+
+// Check if scopes have changed from original
+export function scopesChanged(perm: ScopedPermission): boolean {
+  return (
+    perm.scopes.user !== perm.originalScopes.user ||
+    perm.scopes.project !== perm.originalScopes.project ||
+    perm.scopes.local !== perm.originalScopes.local
+  );
 }
 
 // Project with its permissions from all scopes

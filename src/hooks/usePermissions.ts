@@ -264,7 +264,21 @@ export function usePermissions(initialConfig: LoadedConfig) {
       }));
 
       saveConfig(userSettingsPath, filteredUserPerms, filteredProjects);
-      setState((prev) => ({ ...prev, hasChanges: false }));
+
+      // After save, reset originalScopes to current scopes (changes are now persisted)
+      setState((prev) => ({
+        ...prev,
+        hasChanges: false,
+        userPermissions: prev.userPermissions
+          .filter((p) => !willBeDeleted(p.scopes))
+          .map((p) => ({ ...p, originalScopes: { ...p.scopes } })),
+        projects: prev.projects.map((proj) => ({
+          ...proj,
+          permissions: proj.permissions
+            .filter((p) => !willBeDeleted(p.scopes))
+            .map((p) => ({ ...p, originalScopes: { ...p.scopes } })),
+        })),
+      }));
     },
     [state.userPermissions, state.projects]
   );
