@@ -5,6 +5,11 @@ import * as os from "node:os";
 import { saveUserPermissions, saveProjectPermissions } from "./config-writer.js";
 import type { ScopedPermission } from "./config-types.js";
 
+// Helper to create ScopeFlags
+function makeScopes(user: boolean, project: boolean, local: boolean) {
+  return { user, project, local };
+}
+
 describe("config-writer", () => {
   let tempDir: string;
 
@@ -41,7 +46,7 @@ describe("config-writer", () => {
 
       // Save new permissions
       const newPermissions: ScopedPermission[] = [
-        { rule: "Bash(mkdir:*)", type: "allow", scope: "user" },
+        { rule: "Bash(mkdir:*)", type: "allow", scopes: makeScopes(true, false, false) },
       ];
       saveUserPermissions(settingsPath, newPermissions);
 
@@ -64,7 +69,7 @@ describe("config-writer", () => {
       const settingsPath = path.join(tempDir, "new-settings.json");
 
       const permissions: ScopedPermission[] = [
-        { rule: "WebSearch", type: "allow", scope: "user" },
+        { rule: "WebSearch", type: "allow", scopes: makeScopes(true, false, false) },
       ];
       saveUserPermissions(settingsPath, permissions);
 
@@ -106,7 +111,7 @@ describe("config-writer", () => {
       fs.writeFileSync(settingsPath, JSON.stringify(originalSettings, null, 2));
 
       const permissions: ScopedPermission[] = [
-        { rule: "NewRule", type: "allow", scope: "project" },
+        { rule: "NewRule", type: "allow", scopes: makeScopes(false, true, false) },
       ];
       saveProjectPermissions(projectDir, permissions);
 

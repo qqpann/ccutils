@@ -10,18 +10,12 @@ interface ThreeColumnPaneProps {
   viewportHeight: number;
 }
 
-const COLUMN_WIDTH = 36;
-
 export function ThreeColumnPane({
   permissions,
   selectedRow,
   viewportStart,
   viewportHeight,
 }: ThreeColumnPaneProps) {
-  // Permission order is fixed at load time and never changes
-  // Only the scope property changes when promoting/demoting
-  const separator = `${"═".repeat(COLUMN_WIDTH)}╪${"═".repeat(COLUMN_WIDTH)}╪${"═".repeat(COLUMN_WIDTH)}`;
-
   // Calculate hidden items
   const hiddenAbove = viewportStart;
   const viewportEnd = Math.min(viewportStart + viewportHeight, permissions.length);
@@ -31,19 +25,18 @@ export function ThreeColumnPane({
   const visiblePermissions = permissions.slice(viewportStart, viewportEnd);
 
   // Calculate fixed height for consistent rendering
-  // header(1) + separator(1) + indicator lines(2) + viewport rows
-  const fixedHeight = 2 + 2 + viewportHeight;
+  // legend(1) + indicator lines(2) + viewport rows
+  const fixedHeight = 1 + 2 + viewportHeight;
 
   return (
     <Box flexDirection="column" height={fixedHeight}>
-      <Text>
-        <Text color="cyan" bold>{"USER (global)".padEnd(COLUMN_WIDTH)}</Text>
-        <Text color="gray">│</Text>
-        <Text color="cyan" bold>{"PROJECT".padEnd(COLUMN_WIDTH)}</Text>
-        <Text color="gray">│</Text>
-        <Text color="cyan" bold>{"LOCAL".padEnd(COLUMN_WIDTH)}</Text>
+      {/* Legend */}
+      <Text color="gray" dimColor>
+        {"  [U P L] "}
+        <Text color="cyan">U</Text>=User <Text color="cyan">P</Text>=Project <Text color="cyan">L</Text>=Local
+        {"  "}
+        <Text color="gray" dimColor>u/p/l: toggle  ←/→: navigate</Text>
       </Text>
-      <Text color="gray">{separator}</Text>
 
       {/* Hidden above indicator */}
       {hiddenAbove > 0 ? (
@@ -64,7 +57,7 @@ export function ThreeColumnPane({
       ) : (
         visiblePermissions.map((perm, index) => (
           <PermissionRow
-            key={`${viewportStart + index}:${perm.scope}:${perm.type}:${perm.rule}`}
+            key={`${viewportStart + index}:${perm.type}:${perm.rule}`}
             permission={perm}
             isSelected={viewportStart + index === selectedRow}
           />

@@ -28,12 +28,12 @@ function writeSettingsFile(filePath: string, settings: Settings): void {
   fs.writeFileSync(filePath, content, "utf-8");
 }
 
-// Filter permissions by scope
+// Filter permissions by scope (checks the scope flag)
 function filterPermissionsByScope(
   permissions: ScopedPermission[],
   scope: PermissionScope
 ): ScopedPermission[] {
-  return permissions.filter((p) => p.scope === scope);
+  return permissions.filter((p) => p.scopes[scope]);
 }
 
 // Convert scoped permissions to settings format

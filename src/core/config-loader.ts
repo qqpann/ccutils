@@ -6,6 +6,8 @@ import {
   type ProjectConfig,
   type LoadedConfig,
   type PermissionScope,
+  type ScopeFlags,
+  scopeToFlags,
 } from "./config-types.js";
 import {
   getDefaultUserSettingsPath,
@@ -41,14 +43,44 @@ function extractPermissions(
   const result: ScopedPermission[] = [];
 
   for (const rule of settings.permissions.allow ?? []) {
-    result.push({ rule, type: "allow", scope });
+    result.push({ rule, type: "allow", scopes: scopeToFlags(scope) });
   }
 
   for (const rule of settings.permissions.deny ?? []) {
-    result.push({ rule, type: "deny", scope });
+    result.push({ rule, type: "deny", scopes: scopeToFlags(scope) });
   }
 
   return result;
+}
+
+// Create a unique key for merging permissions (type + rule)
+function permissionKey(perm: ScopedPermission): string {
+  return `${perm.type}:${perm.rule}`;
+}
+
+// Merge permissions from multiple scopes into a unified list
+// If the same rule exists in multiple scopes, combine their scope flags
+function mergePermissions(permsList: ScopedPermission[][]): ScopedPermission[] {
+  const map = new Map<string, ScopedPermission>();
+
+  for (const perms of permsList) {
+    for (const perm of perms) {
+      const key = permissionKey(perm);
+      const existing = map.get(key);
+      if (existing) {
+        // Merge scope flags
+        existing.scopes = {
+          user: existing.scopes.user || perm.scopes.user,
+          project: existing.scopes.project || perm.scopes.project,
+          local: existing.scopes.local || perm.scopes.local,
+        };
+      } else {
+        map.set(key, { ...perm });
+      }
+    }
+  }
+
+  return Array.from(map.values());
 }
 
 // Load configuration for a single project
@@ -63,13 +95,13 @@ function loadProjectConfig(
   const projectPerms = extractPermissions(projectSettings, "project");
   const localPerms = extractPermissions(localSettings, "local");
 
-  // Combine all permissions in fixed order: local → project → user
-  // This order is preserved throughout the session (only scope changes, not position)
-  const allPermissions = [
-    ...localPerms,
-    ...projectPerms,
-    ...userPermissions.map((p) => ({ ...p })),
-  ];
+  // Merge permissions from all scopes
+  // Same rule in multiple scopes will be combined into one entry with multiple scope flags
+  const allPermissions = mergePermissions([
+    localPerms,
+    projectPerms,
+    userPermissions.map((p) => ({ ...p })),
+  ]);
 
   return {
     name: getProjectName(projectPath),

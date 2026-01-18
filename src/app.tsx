@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { Box, Text, useApp, useStdout } from "ink";
-import type { LoadedConfig, ScopedPermission } from "./core/config-types.js";
-import { usePermissions, fullPermissionKey } from "./hooks/usePermissions.js";
+import type { LoadedConfig, PermissionScope } from "./core/config-types.js";
+import { usePermissions } from "./hooks/usePermissions.js";
 import { useNavigation } from "./hooks/useNavigation.js";
 import { ProjectTabs } from "./components/ProjectTabs.js";
 import { ThreeColumnPane } from "./components/ThreeColumnPane.js";
@@ -14,12 +14,11 @@ interface AppProps {
 // Fixed UI elements take up these lines:
 // - Title + margin: 2 lines
 // - Project tabs: 1 line
-// - Header (USER/PROJECT/LOCAL): 1 line
-// - Separator: 1 line
+// - Legend: 1 line
 // - Status bar: 2 lines
 // - Hidden items indicators (top/bottom): 2 lines
 // - Padding: 2 lines (top/bottom)
-const FIXED_UI_LINES = 11;
+const FIXED_UI_LINES = 10;
 const MIN_VIEWPORT_HEIGHT = 3;
 const MAX_VIEWPORT_HEIGHT = 20;
 
@@ -36,15 +35,15 @@ export function App({ config }: AppProps) {
     return Math.min(MAX_VIEWPORT_HEIGHT, Math.max(MIN_VIEWPORT_HEIGHT, calculated));
   }, [stdout?.rows]);
 
-  // Use ref to store nav state and permissions for handlers
+  // Use ref to store nav state for handlers
   const navRef = useRef({ selectedProject: 0, selectedRow: 0, viewportStart: 0 });
-  const permissionsRef = useRef<ScopedPermission[]>([]);
 
   const {
     state,
     getProjectPermissions,
-    promotePermission,
-    demotePermission,
+    toggleScope,
+    moveLeft,
+    moveRight,
     save,
   } = usePermissions(config);
 
@@ -55,25 +54,26 @@ export function App({ config }: AppProps) {
   );
 
   // Navigation handlers using ref
-  const handlePromote = useCallback(() => {
+  const handleMoveLeft = useCallback(() => {
     const { selectedProject, selectedRow } = navRef.current;
-    const perm = permissionsRef.current[selectedRow];
-    if (perm) {
-      promotePermission(selectedProject, fullPermissionKey(perm));
-    }
+    moveLeft(selectedProject, selectedRow);
     setStatusMessage(undefined);
     setConfirmQuit(false);
-  }, [promotePermission]);
+  }, [moveLeft]);
 
-  const handleDemote = useCallback(() => {
+  const handleMoveRight = useCallback(() => {
     const { selectedProject, selectedRow } = navRef.current;
-    const perm = permissionsRef.current[selectedRow];
-    if (perm) {
-      demotePermission(selectedProject, fullPermissionKey(perm));
-    }
+    moveRight(selectedProject, selectedRow);
     setStatusMessage(undefined);
     setConfirmQuit(false);
-  }, [demotePermission]);
+  }, [moveRight]);
+
+  const handleToggleScope = useCallback((scope: PermissionScope) => {
+    const { selectedProject, selectedRow } = navRef.current;
+    toggleScope(selectedProject, selectedRow, scope);
+    setStatusMessage(undefined);
+    setConfirmQuit(false);
+  }, [toggleScope]);
 
   const handleSave = useCallback(() => {
     save(config.userSettingsPath);
@@ -96,8 +96,9 @@ export function App({ config }: AppProps) {
   const { nav, setRowCount } = useNavigation(
     state.projects.length,
     {
-      onPromote: handlePromote,
-      onDemote: handleDemote,
+      onMoveLeft: handleMoveLeft,
+      onMoveRight: handleMoveRight,
+      onToggleScope: handleToggleScope,
       onSave: handleSave,
       onQuit: handleQuit,
     },
@@ -107,14 +108,11 @@ export function App({ config }: AppProps) {
   // Keep ref in sync with nav state
   navRef.current = nav;
 
-  // Get permissions for the currently selected project (already sorted in getProjectPermissions)
+  // Get permissions for the currently selected project
   const displayPermissions = useMemo(
     () => getProjectPermissions(nav.selectedProject),
     [getProjectPermissions, nav.selectedProject]
   );
-
-  // Keep permissions ref in sync
-  permissionsRef.current = displayPermissions;
 
   // Update row count when permissions change
   useEffect(() => {
@@ -143,7 +141,7 @@ export function App({ config }: AppProps) {
       {/* Project tabs */}
       <ProjectTabs projects={projectNames} selectedIndex={nav.selectedProject} />
 
-      {/* Three-column pane */}
+      {/* Permission list with legend */}
       <ThreeColumnPane
         permissions={displayPermissions}
         selectedRow={nav.selectedRow}

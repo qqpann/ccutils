@@ -4,7 +4,9 @@ import type {
   PermissionScope,
   LoadedConfig,
   ProjectConfig,
+  ScopeFlags,
 } from "../core/config-types.js";
+import { countEnabledScopes, willBeDeleted } from "../core/config-types.js";
 import { saveConfig } from "../core/config-writer.js";
 
 export interface PermissionState {
@@ -13,21 +15,30 @@ export interface PermissionState {
   hasChanges: boolean;
 }
 
-// Get scope order for promotion/demotion
-const SCOPE_ORDER: PermissionScope[] = ["local", "project", "user"];
-
-function getScopeIndex(scope: PermissionScope): number {
-  return SCOPE_ORDER.indexOf(scope);
-}
+// Scope order for navigation: U -> P -> L (left to right conceptually)
+const SCOPE_ORDER: PermissionScope[] = ["user", "project", "local"];
 
 // Create a unique key for a permission (type + rule, without scope)
 export function permissionKey(perm: ScopedPermission): string {
   return `${perm.type}:${perm.rule}`;
 }
 
-// Create a full key including scope (for exact matching)
-export function fullPermissionKey(perm: ScopedPermission): string {
-  return `${perm.scope}:${perm.type}:${perm.rule}`;
+// Get single enabled scope (returns null if none or multiple)
+function getSingleScope(flags: ScopeFlags): PermissionScope | null {
+  const enabled = SCOPE_ORDER.filter((s) => flags[s]);
+  return enabled.length === 1 ? enabled[0] : null;
+}
+
+// Get next scope in cycle (U -> P -> L -> U)
+function getNextScope(scope: PermissionScope): PermissionScope {
+  const idx = SCOPE_ORDER.indexOf(scope);
+  return SCOPE_ORDER[(idx + 1) % SCOPE_ORDER.length];
+}
+
+// Get previous scope in cycle (U <- P <- L <- U)
+function getPrevScope(scope: PermissionScope): PermissionScope {
+  const idx = SCOPE_ORDER.indexOf(scope);
+  return SCOPE_ORDER[(idx - 1 + SCOPE_ORDER.length) % SCOPE_ORDER.length];
 }
 
 export function usePermissions(initialConfig: LoadedConfig) {
@@ -38,8 +49,6 @@ export function usePermissions(initialConfig: LoadedConfig) {
   });
 
   // Get permissions for the current project
-  // Order is fixed at load time: [...local, ...project, ...user]
-  // This order never changes - only the scope property changes when promoting/demoting
   const getProjectPermissions = useCallback(
     (projectIndex: number): ScopedPermission[] => {
       if (projectIndex < 0 || projectIndex >= state.projects.length) {
@@ -50,174 +59,211 @@ export function usePermissions(initialConfig: LoadedConfig) {
     [state.projects]
   );
 
-  // Promote a permission (local → project → user)
-  // Uses fullKey to identify the exact permission
-  const promotePermission = useCallback(
-    (projectIndex: number, fullKey: string) => {
+  // Toggle a specific scope for the selected permission
+  const toggleScope = useCallback(
+    (projectIndex: number, permIndex: number, scope: PermissionScope) => {
       setState((prev) => {
         const project = prev.projects[projectIndex];
         if (!project) return prev;
 
-        // Find the permission by full key
-        const permIdx = project.permissions.findIndex(
-          (p) => fullPermissionKey(p) === fullKey
-        );
-        if (permIdx === -1) return prev;
+        const perm = project.permissions[permIndex];
+        if (!perm) return prev;
 
-        const perm = project.permissions[permIdx];
-        const currentScopeIdx = getScopeIndex(perm.scope);
-        if (currentScopeIdx >= SCOPE_ORDER.length - 1) {
-          // Already at user level, can't promote
-          return prev;
-        }
+        const newScopes: ScopeFlags = {
+          ...perm.scopes,
+          [scope]: !perm.scopes[scope],
+        };
 
-        const newScope = SCOPE_ORDER[currentScopeIdx + 1];
-        const updatedPerm: ScopedPermission = { ...perm, scope: newScope };
-        const key = permissionKey(perm);
+        const updatedPerm: ScopedPermission = { ...perm, scopes: newScopes };
 
-        // If promoting to user level, add to userPermissions and update all projects
-        if (newScope === "user") {
-          // Check if already exists in user
-          if (prev.userPermissions.some((p) => permissionKey(p) === key)) {
-            // Remove from current project only
-            const newProjects = prev.projects.map((proj, idx) => {
-              if (idx === projectIndex) {
-                return {
-                  ...proj,
-                  permissions: proj.permissions.filter(
-                    (p) => fullPermissionKey(p) !== fullKey
-                  ),
-                };
-              }
-              return proj;
-            });
-            return { ...prev, projects: newProjects, hasChanges: true };
-          }
-
-          // Add to user permissions
-          const newUserPerms = [...prev.userPermissions, updatedPerm];
-
-          // Update all projects: replace existing perm with user-scoped version
-          const newProjects = prev.projects.map((proj) => ({
-            ...proj,
-            permissions: proj.permissions.map((p) =>
-              permissionKey(p) === key ? updatedPerm : p
-            ),
-          }));
-
-          return {
-            ...prev,
-            userPermissions: newUserPerms,
-            projects: newProjects,
-            hasChanges: true,
-          };
-        }
-
-        // Promoting within project (local → project)
+        // Update the permission in the project
         const newProjects = prev.projects.map((proj, idx) => {
           if (idx === projectIndex) {
             return {
               ...proj,
-              permissions: proj.permissions.map((p) =>
-                fullPermissionKey(p) === fullKey ? updatedPerm : p
+              permissions: proj.permissions.map((p, i) =>
+                i === permIndex ? updatedPerm : p
               ),
             };
           }
           return proj;
         });
 
-        return { ...prev, projects: newProjects, hasChanges: true };
-      });
-    },
-    []
-  );
-
-  // Demote a permission (user → project → local)
-  // Uses fullKey to identify the exact permission
-  const demotePermission = useCallback(
-    (projectIndex: number, fullKey: string) => {
-      setState((prev) => {
-        const project = prev.projects[projectIndex];
-        if (!project) return prev;
-
-        // Find the permission by full key
-        const permIdx = project.permissions.findIndex(
-          (p) => fullPermissionKey(p) === fullKey
-        );
-        if (permIdx === -1) return prev;
-
-        const perm = project.permissions[permIdx];
-        const currentScopeIdx = getScopeIndex(perm.scope);
-        if (currentScopeIdx <= 0) {
-          // Already at local level, can't demote
-          return prev;
-        }
-
-        const newScope = SCOPE_ORDER[currentScopeIdx - 1];
-        const updatedPerm: ScopedPermission = { ...perm, scope: newScope };
+        // Update userPermissions if user scope changed
+        let newUserPerms = prev.userPermissions;
         const key = permissionKey(perm);
 
-        // If demoting from user level
-        if (perm.scope === "user") {
-          // Remove from user permissions
-          const newUserPerms = prev.userPermissions.filter(
-            (p) => permissionKey(p) !== key
-          );
-
-          // Update only this project: change to project scope
-          const newProjects = prev.projects.map((proj, idx) => {
-            if (idx === projectIndex) {
-              return {
-                ...proj,
-                permissions: proj.permissions.map((p) =>
-                  fullPermissionKey(p) === fullKey ? updatedPerm : p
-                ),
-              };
+        if (scope === "user") {
+          if (newScopes.user) {
+            // Adding to user scope - add if not exists
+            if (!prev.userPermissions.some((p) => permissionKey(p) === key)) {
+              newUserPerms = [...prev.userPermissions, updatedPerm];
             }
-            // Other projects: remove if they had this user permission
-            return {
-              ...proj,
-              permissions: proj.permissions.filter(
-                (p) => !(p.scope === "user" && permissionKey(p) === key)
-              ),
-            };
-          });
-
-          return {
-            ...prev,
-            userPermissions: newUserPerms,
-            projects: newProjects,
-            hasChanges: true,
-          };
+          } else {
+            // Removing from user scope
+            newUserPerms = prev.userPermissions.filter(
+              (p) => permissionKey(p) !== key
+            );
+          }
         }
 
-        // Demoting within project (project → local)
-        const newProjects = prev.projects.map((proj, idx) => {
-          if (idx === projectIndex) {
-            return {
-              ...proj,
-              permissions: proj.permissions.map((p) =>
-                fullPermissionKey(p) === fullKey ? updatedPerm : p
-              ),
-            };
-          }
-          return proj;
-        });
-
-        return { ...prev, projects: newProjects, hasChanges: true };
+        return {
+          ...prev,
+          userPermissions: newUserPerms,
+          projects: newProjects,
+          hasChanges: true,
+        };
       });
     },
     []
   );
 
-  // Save all changes
+  // Move left: single scope -> prev scope (loop), multiple -> user only
+  const moveLeft = useCallback((projectIndex: number, permIndex: number) => {
+    setState((prev) => {
+      const project = prev.projects[projectIndex];
+      if (!project) return prev;
+
+      const perm = project.permissions[permIndex];
+      if (!perm) return prev;
+
+      const enabledCount = countEnabledScopes(perm.scopes);
+      let newScopes: ScopeFlags;
+
+      if (enabledCount === 0) {
+        // Empty state: go to local (loop from empty)
+        newScopes = { user: false, project: false, local: true };
+      } else if (enabledCount === 1) {
+        // Single scope: cycle to previous
+        const currentScope = getSingleScope(perm.scopes)!;
+        const prevScope = getPrevScope(currentScope);
+        newScopes = { user: false, project: false, local: false };
+        newScopes[prevScope] = true;
+      } else {
+        // Multiple scopes: collapse to user
+        newScopes = { user: true, project: false, local: false };
+      }
+
+      const updatedPerm: ScopedPermission = { ...perm, scopes: newScopes };
+
+      // Update the permission in the project
+      const newProjects = prev.projects.map((proj, idx) => {
+        if (idx === projectIndex) {
+          return {
+            ...proj,
+            permissions: proj.permissions.map((p, i) =>
+              i === permIndex ? updatedPerm : p
+            ),
+          };
+        }
+        return proj;
+      });
+
+      // Update userPermissions
+      let newUserPerms = prev.userPermissions;
+      const key = permissionKey(perm);
+
+      if (newScopes.user && !perm.scopes.user) {
+        // Adding to user scope
+        if (!prev.userPermissions.some((p) => permissionKey(p) === key)) {
+          newUserPerms = [...prev.userPermissions, updatedPerm];
+        }
+      } else if (!newScopes.user && perm.scopes.user) {
+        // Removing from user scope
+        newUserPerms = prev.userPermissions.filter(
+          (p) => permissionKey(p) !== key
+        );
+      }
+
+      return {
+        ...prev,
+        userPermissions: newUserPerms,
+        projects: newProjects,
+        hasChanges: true,
+      };
+    });
+  }, []);
+
+  // Move right: single scope -> next scope (loop), multiple -> local only
+  const moveRight = useCallback((projectIndex: number, permIndex: number) => {
+    setState((prev) => {
+      const project = prev.projects[projectIndex];
+      if (!project) return prev;
+
+      const perm = project.permissions[permIndex];
+      if (!perm) return prev;
+
+      const enabledCount = countEnabledScopes(perm.scopes);
+      let newScopes: ScopeFlags;
+
+      if (enabledCount === 0) {
+        // Empty state: go to user (loop from empty)
+        newScopes = { user: true, project: false, local: false };
+      } else if (enabledCount === 1) {
+        // Single scope: cycle to next
+        const currentScope = getSingleScope(perm.scopes)!;
+        const nextScope = getNextScope(currentScope);
+        newScopes = { user: false, project: false, local: false };
+        newScopes[nextScope] = true;
+      } else {
+        // Multiple scopes: collapse to local
+        newScopes = { user: false, project: false, local: true };
+      }
+
+      const updatedPerm: ScopedPermission = { ...perm, scopes: newScopes };
+
+      // Update the permission in the project
+      const newProjects = prev.projects.map((proj, idx) => {
+        if (idx === projectIndex) {
+          return {
+            ...proj,
+            permissions: proj.permissions.map((p, i) =>
+              i === permIndex ? updatedPerm : p
+            ),
+          };
+        }
+        return proj;
+      });
+
+      // Update userPermissions
+      let newUserPerms = prev.userPermissions;
+      const key = permissionKey(perm);
+
+      if (newScopes.user && !perm.scopes.user) {
+        // Adding to user scope
+        if (!prev.userPermissions.some((p) => permissionKey(p) === key)) {
+          newUserPerms = [...prev.userPermissions, updatedPerm];
+        }
+      } else if (!newScopes.user && perm.scopes.user) {
+        // Removing from user scope
+        newUserPerms = prev.userPermissions.filter(
+          (p) => permissionKey(p) !== key
+        );
+      }
+
+      return {
+        ...prev,
+        userPermissions: newUserPerms,
+        projects: newProjects,
+        hasChanges: true,
+      };
+    });
+  }, []);
+
+  // Save all changes (filter out permissions with no scopes)
   const save = useCallback(
     (userSettingsPath: string) => {
-      saveConfig(
-        userSettingsPath,
-        state.userPermissions,
-        state.projects.map((p) => ({ path: p.path, permissions: p.permissions }))
+      // Filter out permissions that will be deleted (no scopes enabled)
+      const filteredUserPerms = state.userPermissions.filter(
+        (p) => !willBeDeleted(p.scopes)
       );
+
+      const filteredProjects = state.projects.map((proj) => ({
+        path: proj.path,
+        permissions: proj.permissions.filter((p) => !willBeDeleted(p.scopes)),
+      }));
+
+      saveConfig(userSettingsPath, filteredUserPerms, filteredProjects);
       setState((prev) => ({ ...prev, hasChanges: false }));
     },
     [state.userPermissions, state.projects]
@@ -226,8 +272,9 @@ export function usePermissions(initialConfig: LoadedConfig) {
   return {
     state,
     getProjectPermissions,
-    promotePermission,
-    demotePermission,
+    toggleScope,
+    moveLeft,
+    moveRight,
     save,
   };
 }

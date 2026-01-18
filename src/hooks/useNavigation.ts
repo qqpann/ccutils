@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useInput } from "ink";
+import type { PermissionScope } from "../core/config-types.js";
 
 export interface NavigationState {
   selectedProject: number;
@@ -8,8 +9,9 @@ export interface NavigationState {
 }
 
 export interface NavigationHandlers {
-  onPromote: () => void;
-  onDemote: () => void;
+  onMoveLeft: () => void;
+  onMoveRight: () => void;
+  onToggleScope: (scope: PermissionScope) => void;
   onSave: () => void;
   onQuit: () => void;
 }
@@ -91,9 +93,9 @@ export function useNavigation(
         return { ...prev, selectedRow: newRow, viewportStart: newViewportStart };
       });
     } else if (key.leftArrow) {
-      handlersRef.current.onPromote();
+      handlersRef.current.onMoveLeft();
     } else if (key.rightArrow) {
-      handlersRef.current.onDemote();
+      handlersRef.current.onMoveRight();
     } else if (key.tab) {
       if (key.shift) {
         // Previous project
@@ -117,6 +119,12 @@ export function useNavigation(
       handlersRef.current.onSave();
     } else if (input === "q" || input === "Q") {
       handlersRef.current.onQuit();
+    } else if (input === "u" || input === "U") {
+      handlersRef.current.onToggleScope("user");
+    } else if (input === "p" || input === "P") {
+      handlersRef.current.onToggleScope("project");
+    } else if (input === "l" || input === "L") {
+      handlersRef.current.onToggleScope("local");
     }
   });
 
