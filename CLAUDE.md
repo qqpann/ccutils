@@ -71,6 +71,8 @@ Uses Ink (React renderer for terminals) with:
 - `Box`/`Text` for flexbox-style layout
 - `useStdout` for terminal dimensions
 
+For layout debugging (row clipping issues, viewport calculation), see [docs/tui-layout-debugging.md](docs/tui-layout-debugging.md).
+
 ## Testing
 
 Tests are in `src/core/config-writer.test.ts`. The test file validates:
